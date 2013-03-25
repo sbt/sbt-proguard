@@ -5,7 +5,7 @@ organization := "com.typesafe.sbt"
 
 name := "sbt-proguard"
 
-version := "0.1.0-SNAPSHOT"
+version := "0.1.1-SNAPSHOT"
 
 publishMavenStyle := false
 
