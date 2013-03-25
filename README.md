@@ -59,7 +59,7 @@ The code for this sbt plugin is licensed under the [Apache 2.0 License][apache].
 
 [sbt]: https://github.com/sbt/sbt
 [ProGuard]: http://proguard.sourceforge.net/
-[samples]: https://github.com/sbt/sbt-aspectj/tree/master/src/sbt-test
+[samples]: https://github.com/sbt/sbt-proguard/tree/master/src/sbt-test
 [email]: http://groups.google.com/group/simple-build-tool
 [cla]: http://www.typesafe.com/contribute/cla
 [gpl]: http://www.gnu.org/licenses/gpl.html
