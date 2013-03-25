@@ -28,6 +28,18 @@ Run proguard at the sbt shell with:
     proguard:proguard
 
 
+Merging Duplicates
+------------------
+
+There is no built-in solution for merging duplicated files with sbt-proguard. It
+is possible, however, to simply use [sbt-assembly] to do the merging and then
+apply proguard to the assembled result.
+
+You can have the output from [sbt-assembly] as the only proguard input with:
+
+    ProguardKeys.filteredInJars in Proguard <<= AssemblyKeys.assembly map { jar => Seq(FilteredJar(jar, None)) }
+
+
 Sample projects
 ---------------
 
@@ -59,6 +71,7 @@ The code for this sbt plugin is licensed under the [Apache 2.0 License][apache].
 
 [sbt]: https://github.com/sbt/sbt
 [ProGuard]: http://proguard.sourceforge.net/
+[sbt-assembly]: https://github.com/sbt/sbt-assembly
 [samples]: https://github.com/sbt/sbt-proguard/tree/master/src/sbt-test
 [email]: http://groups.google.com/group/simple-build-tool
 [cla]: http://www.typesafe.com/contribute/cla
