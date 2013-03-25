@@ -6,4 +6,4 @@ ProguardKeys.options in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarni
 
 ProguardKeys.options in Proguard += ProguardOptions.keepMain("Test")
 
-ProguardKeys.filteredInJars in Proguard <<= AssemblyKeys.assembly map { jar => Seq(FilteredJar(jar, None)) }
+ProguardKeys.filteredInJars in Proguard <<= AssemblyKeys.assembly map ProguardOptions.noFilter

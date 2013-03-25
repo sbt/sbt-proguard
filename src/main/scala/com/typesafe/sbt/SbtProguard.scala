@@ -91,6 +91,8 @@ object SbtProguard extends Plugin {
   }
 
   object ProguardOptions {
+    def noFilter(jar: File): Seq[FilteredJar] = addFilter(Seq(jar), None)
+
     def noFilter(jars: Seq[File]): Seq[FilteredJar] = addFilter(jars, None)
 
     def addFilter(jars: Seq[File], filter: Option[String]): Seq[FilteredJar] = {

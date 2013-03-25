@@ -37,7 +37,7 @@ apply proguard to the assembled result.
 
 You can have the output from [sbt-assembly] as the only proguard input with:
 
-    ProguardKeys.filteredInJars in Proguard <<= AssemblyKeys.assembly map { jar => Seq(FilteredJar(jar, None)) }
+    ProguardKeys.filteredInJars in Proguard <<= AssemblyKeys.assembly map ProguardOptions.noFilter
 
 
 Sample projects
