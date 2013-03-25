@@ -9,7 +9,9 @@ Add plugin
 
 Add plugin to `project/plugins.sbt`. For example:
 
-    addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.1.0")
+```scala
+addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.1.0")
+```
 
 
 Example
@@ -17,15 +19,19 @@ Example
 
 A simple `build.sbt` with settings to configure sbt-proguard:
 
-    proguardSettings
+```scala
+proguardSettings
 
-    ProguardKeys.options in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
+ProguardKeys.options in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
 
-    ProguardKeys.options in Proguard += ProguardOptions.keepMain("some.MainClass")
+ProguardKeys.options in Proguard += ProguardOptions.keepMain("some.MainClass")
+```
 
 Run proguard at the sbt shell with:
 
-    proguard:proguard
+```shell
+proguard:proguard
+```
 
 
 Merging Duplicates
@@ -37,7 +43,9 @@ apply proguard to the assembled result.
 
 You can have the output from [sbt-assembly] as the only proguard input with:
 
-    ProguardKeys.filteredInJars in Proguard <<= AssemblyKeys.assembly map ProguardOptions.noFilter
+```scala
+ProguardKeys.filteredInJars in Proguard <<= AssemblyKeys.assembly map ProguardOptions.noFilter
+```
 
 
 Sample projects
