@@ -65,7 +65,7 @@ object SbtProguard extends Plugin {
     )
 
     def proguardTask = (proguardConfiguration, options, javaOptions in proguard, managedClasspath, filteredInputs, outputs, cacheDirectory, streams) map {
-      (config, opts, javaOpts, cp, filteredInputs, outputs, cache, s) => {
+      (config, opts, javaOpts, cp, inputs, outputs, cache, s) => {
         writeConfiguration(config, opts)
         val cached = FileFunction.cached(cache / "proguard", FilesInfo.hash) { _ =>
           outputs foreach IO.delete
@@ -74,8 +74,9 @@ object SbtProguard extends Plugin {
           runProguard(config, javaOpts, cp.files, s.log)
           outputs.toSet
         }
-        val inputs = config +: (filteredInputs map (_.file))
-        cached(inputs.toSet)
+        val files = inputs flatMap { i => if (i.file.isDirectory) i.file.***.get else Seq(i.file) }
+        val inputSet = (config +: files).toSet
+        cached(inputSet)
         outputs
       }
     }
