@@ -18,6 +18,7 @@ object SbtProguard extends Plugin {
     val libraries = TaskKey[Seq[File]]("libraries")
     val outputs = TaskKey[Seq[File]]("outputs")
     val defaultInputFilter = TaskKey[Option[String]]("default-input-filter")
+    val inputFilter = TaskKey[File => Option[String]]("input-filter")
     val filteredInputs = TaskKey[Seq[Filtered]]("filtered-inputs")
     val filteredLibraries = TaskKey[Seq[Filtered]]("filtered-libraries")
     val filteredOutputs = TaskKey[Seq[Filtered]]("filtered-outputs")
@@ -42,7 +43,8 @@ object SbtProguard extends Plugin {
       libraries <<= (binaryDeps, inputs) map { (deps, in) => deps filterNot in.toSet },
       outputs <<= artifactPath map { Seq(_) },
       defaultInputFilter := Some("!META-INF/**"),
-      filteredInputs <<= (inputs, defaultInputFilter) map { (jars, filter) => addFilter(jars, filter) },
+      inputFilter <<= defaultInputFilter map { default => { f => default } },
+      filteredInputs <<= (inputs, inputFilter) map { (jars, filter) => jars map { jar => Filtered(jar, filter(jar)) } },
       filteredInputs <++= packageBin in Compile map noFilter,
       filteredLibraries <<= libraries map noFilter,
       filteredOutputs <<= outputs map noFilter,
@@ -95,11 +97,11 @@ object SbtProguard extends Plugin {
   object ProguardOptions {
     case class Filtered(file: File, filter: Option[String])
 
-    def noFilter(jar: File): Seq[Filtered] = addFilter(Seq(jar), None)
+    def noFilter(jar: File): Seq[Filtered] = Seq(Filtered(jar, None))
 
-    def noFilter(jars: Seq[File]): Seq[Filtered] = addFilter(jars, None)
+    def noFilter(jars: Seq[File]): Seq[Filtered] = filtered(jars, None)
 
-    def addFilter(jars: Seq[File], filter: Option[String]): Seq[Filtered] = {
+    def filtered(jars: Seq[File], filter: Option[String]): Seq[Filtered] = {
       jars map { jar => Filtered(jar, filter) }
     }
 
