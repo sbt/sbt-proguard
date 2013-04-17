@@ -5,7 +5,7 @@ import sbt.Keys._
 
 object SbtProguard extends Plugin {
 
-  case class FilteredJar(file: File, filter: Option[String])
+  case class Filtered(file: File, filter: Option[String])
 
   val Proguard = config("proguard").hide
 
@@ -14,13 +14,13 @@ object SbtProguard extends Plugin {
     val proguardDirectory = SettingKey[File]("proguard-directory")
     val proguardConfiguration = SettingKey[File]("proguard-configuration")
     val binaryDeps = TaskKey[Seq[File]]("binaryDeps")
-    val inJars = TaskKey[Seq[File]]("in-jars")
-    val libraryJars = TaskKey[Seq[File]]("library-jars")
-    val outJars = TaskKey[Seq[File]]("out-jars")
-    val defaultInFilter = TaskKey[Option[String]]("default-in-filter")
-    val filteredInJars = TaskKey[Seq[FilteredJar]]("filtered-in-jars")
-    val filteredLibraryJars = TaskKey[Seq[FilteredJar]]("filtered-library-jars")
-    val filteredOutJars = TaskKey[Seq[FilteredJar]]("filtered-out-jars")
+    val inputs = TaskKey[Seq[File]]("inputs")
+    val libraries = TaskKey[Seq[File]]("libraries")
+    val outputs = TaskKey[Seq[File]]("outputs")
+    val defaultInputFilter = TaskKey[Option[String]]("default-input-filter")
+    val filteredInputs = TaskKey[Seq[Filtered]]("filtered-inputs")
+    val filteredLibraries = TaskKey[Seq[Filtered]]("filtered-libraries")
+    val filteredOutputs = TaskKey[Seq[Filtered]]("filtered-outputs")
     val options = TaskKey[Seq[String]]("options")
     val proguard = TaskKey[Seq[File]]("proguard")
   }
@@ -37,18 +37,18 @@ object SbtProguard extends Plugin {
     artifactPath <<= (proguardDirectory, artifactPath in packageBin in Compile) { (dir, path) => dir / path.getName },
     managedClasspath <<= (configuration, classpathTypes, update) map Classpaths.managedJars,
     binaryDeps <<= compile in Compile map { _.relations.allBinaryDeps.toSeq },
-    inJars <<= dependencyClasspath in Compile map { _.files },
-    libraryJars <<= (binaryDeps, inJars) map { (deps, in) => deps filterNot in.toSet },
-    outJars <<= artifactPath map { Seq(_) },
-    defaultInFilter := Some("!META-INF/**"),
-    filteredInJars <<= (inJars, defaultInFilter) map { (jars, filter) => addFilter(jars, filter) },
-    filteredInJars <+= packageBin in Compile map { jar => FilteredJar(jar, None) },
-    filteredLibraryJars <<= libraryJars map noFilter,
-    filteredOutJars <<= outJars map noFilter,
-    options <<= (filteredInJars, filteredLibraryJars, filteredOutJars) map { (in, library, out) =>
-      jarOptions("-injars", in) ++
-      jarOptions("-libraryjars", library) ++
-      jarOptions("-outjars", out)
+    inputs <<= dependencyClasspath in Compile map { _.files },
+    libraries <<= (binaryDeps, inputs) map { (deps, in) => deps filterNot in.toSet },
+    outputs <<= artifactPath map { Seq(_) },
+    defaultInputFilter := Some("!META-INF/**"),
+    filteredInputs <<= (inputs, defaultInputFilter) map { (jars, filter) => addFilter(jars, filter) },
+    filteredInputs <++= packageBin in Compile map noFilter,
+    filteredLibraries <<= libraries map noFilter,
+    filteredOutputs <<= outputs map noFilter,
+    options <<= (filteredInputs, filteredLibraries, filteredOutputs) map { (ins, libs, outs) =>
+      jarOptions("-injars", ins) ++
+      jarOptions("-libraryjars", libs) ++
+      jarOptions("-outjars", outs)
     },
     javaOptions in proguard := Seq("-Xmx256M"),
     proguard <<= proguardTask
@@ -61,7 +61,7 @@ object SbtProguard extends Plugin {
     }
   )
 
-  def proguardTask = (proguardConfiguration, options, javaOptions in proguard, managedClasspath, filteredInJars, outJars, cacheDirectory, streams) map {
+  def proguardTask = (proguardConfiguration, options, javaOptions in proguard, managedClasspath, filteredInputs, outputs, cacheDirectory, streams) map {
     (config, opts, javaOpts, cp, filteredInputs, outputs, cache, s) => {
       writeConfiguration(config, opts)
       val cached = FileFunction.cached(cache / "proguard", FilesInfo.hash) { _ =>
@@ -91,19 +91,19 @@ object SbtProguard extends Plugin {
   }
 
   object ProguardOptions {
-    def noFilter(jar: File): Seq[FilteredJar] = addFilter(Seq(jar), None)
+    def noFilter(jar: File): Seq[Filtered] = addFilter(Seq(jar), None)
 
-    def noFilter(jars: Seq[File]): Seq[FilteredJar] = addFilter(jars, None)
+    def noFilter(jars: Seq[File]): Seq[Filtered] = addFilter(jars, None)
 
-    def addFilter(jars: Seq[File], filter: Option[String]): Seq[FilteredJar] = {
-      jars map { jar => FilteredJar(jar, filter) }
+    def addFilter(jars: Seq[File], filter: Option[String]): Seq[Filtered] = {
+      jars map { jar => Filtered(jar, filter) }
     }
 
     def filterString(filter: Option[String]): String = {
       filter map { "(" + _ + ")" } getOrElse ""
     }
 
-    def jarOptions(option: String, jars: Seq[FilteredJar]): Seq[String] = {
+    def jarOptions(option: String, jars: Seq[Filtered]): Seq[String] = {
       jars map { jar => "%s \"%s\"%s" format (option, jar.file.getCanonicalPath, filterString(jar.filter)) }
     }
 

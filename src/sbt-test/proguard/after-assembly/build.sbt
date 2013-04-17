@@ -6,4 +6,4 @@ ProguardKeys.options in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarni
 
 ProguardKeys.options in Proguard += ProguardOptions.keepMain("Test")
 
-ProguardKeys.filteredInJars in Proguard <<= AssemblyKeys.assembly map ProguardOptions.noFilter
+ProguardKeys.filteredInputs in Proguard <<= AssemblyKeys.assembly map ProguardOptions.noFilter

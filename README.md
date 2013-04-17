@@ -44,7 +44,7 @@ apply proguard to the assembled result.
 You can have the output from [sbt-assembly] as the only proguard input with:
 
 ```scala
-ProguardKeys.filteredInJars in Proguard <<= AssemblyKeys.assembly map ProguardOptions.noFilter
+ProguardKeys.filteredInputs in Proguard <<= AssemblyKeys.assembly map ProguardOptions.noFilter
 ```
 
 
