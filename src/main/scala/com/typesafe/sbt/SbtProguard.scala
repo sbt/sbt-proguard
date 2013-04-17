@@ -5,11 +5,11 @@ import sbt.Keys._
 
 object SbtProguard extends Plugin {
 
-  case class Filtered(file: File, filter: Option[String])
-
   val Proguard = config("proguard").hide
 
   object ProguardKeys {
+    import ProguardOptions.Filtered
+
     val proguardVersion = SettingKey[String]("proguard-version")
     val proguardDirectory = SettingKey[File]("proguard-directory")
     val proguardConfiguration = SettingKey[File]("proguard-configuration")
@@ -93,6 +93,8 @@ object SbtProguard extends Plugin {
   }
 
   object ProguardOptions {
+    case class Filtered(file: File, filter: Option[String])
+
     def noFilter(jar: File): Seq[Filtered] = addFilter(Seq(jar), None)
 
     def noFilter(jars: Seq[File]): Seq[Filtered] = addFilter(jars, None)
