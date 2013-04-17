@@ -25,69 +25,71 @@ object SbtProguard extends Plugin {
     val proguard = TaskKey[Seq[File]]("proguard")
   }
 
-  import ProguardKeys._
-  import ProguardOptions._
+  lazy val proguardSettings: Seq[Setting[_]] = inConfig(Proguard)(ProguardSettings.default) ++ ProguardSettings.dependencies
 
-  lazy val proguardSettings: Seq[Setting[_]] = inConfig(Proguard)(defaultSettings) ++ dependencySettings
+  object ProguardSettings {
+    import ProguardKeys._
+    import ProguardOptions._
 
-  def defaultSettings: Seq[Setting[_]] = Seq(
-    proguardVersion := "4.9",
-    proguardDirectory <<= crossTarget / "proguard",
-    proguardConfiguration <<= proguardDirectory / "configuration.pro",
-    artifactPath <<= (proguardDirectory, artifactPath in packageBin in Compile) { (dir, path) => dir / path.getName },
-    managedClasspath <<= (configuration, classpathTypes, update) map Classpaths.managedJars,
-    binaryDeps <<= compile in Compile map { _.relations.allBinaryDeps.toSeq },
-    inputs <<= dependencyClasspath in Compile map { _.files },
-    libraries <<= (binaryDeps, inputs) map { (deps, in) => deps filterNot in.toSet },
-    outputs <<= artifactPath map { Seq(_) },
-    defaultInputFilter := Some("!META-INF/**"),
-    filteredInputs <<= (inputs, defaultInputFilter) map { (jars, filter) => addFilter(jars, filter) },
-    filteredInputs <++= packageBin in Compile map noFilter,
-    filteredLibraries <<= libraries map noFilter,
-    filteredOutputs <<= outputs map noFilter,
-    options <<= (filteredInputs, filteredLibraries, filteredOutputs) map { (ins, libs, outs) =>
-      jarOptions("-injars", ins) ++
-      jarOptions("-libraryjars", libs) ++
-      jarOptions("-outjars", outs)
-    },
-    javaOptions in proguard := Seq("-Xmx256M"),
-    proguard <<= proguardTask
-  )
+    def default: Seq[Setting[_]] = Seq(
+      proguardVersion := "4.9",
+      proguardDirectory <<= crossTarget / "proguard",
+      proguardConfiguration <<= proguardDirectory / "configuration.pro",
+      artifactPath <<= (proguardDirectory, artifactPath in packageBin in Compile) { (dir, path) => dir / path.getName },
+      managedClasspath <<= (configuration, classpathTypes, update) map Classpaths.managedJars,
+      binaryDeps <<= compile in Compile map { _.relations.allBinaryDeps.toSeq },
+      inputs <<= dependencyClasspath in Compile map { _.files },
+      libraries <<= (binaryDeps, inputs) map { (deps, in) => deps filterNot in.toSet },
+      outputs <<= artifactPath map { Seq(_) },
+      defaultInputFilter := Some("!META-INF/**"),
+      filteredInputs <<= (inputs, defaultInputFilter) map { (jars, filter) => addFilter(jars, filter) },
+      filteredInputs <++= packageBin in Compile map noFilter,
+      filteredLibraries <<= libraries map noFilter,
+      filteredOutputs <<= outputs map noFilter,
+      options <<= (filteredInputs, filteredLibraries, filteredOutputs) map { (ins, libs, outs) =>
+        jarOptions("-injars", ins) ++
+        jarOptions("-libraryjars", libs) ++
+        jarOptions("-outjars", outs)
+      },
+      javaOptions in proguard := Seq("-Xmx256M"),
+      proguard <<= proguardTask
+    )
 
-  def dependencySettings: Seq[Setting[_]] = Seq(
-    ivyConfigurations += Proguard,
-    libraryDependencies <+= (proguardVersion in Proguard) { version =>
-      "net.sf.proguard" % "proguard-base" % version % Proguard.name
-    }
-  )
-
-  def proguardTask = (proguardConfiguration, options, javaOptions in proguard, managedClasspath, filteredInputs, outputs, cacheDirectory, streams) map {
-    (config, opts, javaOpts, cp, filteredInputs, outputs, cache, s) => {
-      writeConfiguration(config, opts)
-      val cached = FileFunction.cached(cache / "proguard", FilesInfo.hash) { _ =>
-        outputs foreach IO.delete
-        s.log.debug("Proguard configuration:")
-        opts foreach (s.log.debug(_))
-        runProguard(config, javaOpts, cp.files, s.log)
-        outputs.toSet
+    def dependencies: Seq[Setting[_]] = Seq(
+      ivyConfigurations += Proguard,
+      libraryDependencies <+= (proguardVersion in Proguard) { version =>
+        "net.sf.proguard" % "proguard-base" % version % Proguard.name
       }
-      val inputs = config +: (filteredInputs map (_.file))
-      cached(inputs.toSet)
-      outputs
+    )
+
+    def proguardTask = (proguardConfiguration, options, javaOptions in proguard, managedClasspath, filteredInputs, outputs, cacheDirectory, streams) map {
+      (config, opts, javaOpts, cp, filteredInputs, outputs, cache, s) => {
+        writeConfiguration(config, opts)
+        val cached = FileFunction.cached(cache / "proguard", FilesInfo.hash) { _ =>
+          outputs foreach IO.delete
+          s.log.debug("Proguard configuration:")
+          opts foreach (s.log.debug(_))
+          runProguard(config, javaOpts, cp.files, s.log)
+          outputs.toSet
+        }
+        val inputs = config +: (filteredInputs map (_.file))
+        cached(inputs.toSet)
+        outputs
+      }
     }
-  }
 
-  def writeConfiguration(config: File, options: Seq[String]): Unit = {
-    val opts = options mkString "\n"
-    IO.write(config, opts)
-  }
+    def writeConfiguration(config: File, options: Seq[String]): Unit = {
+      val opts = options mkString "\n"
+      IO.write(config, opts)
+    }
 
-  def runProguard(config: File, javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
-    val options = javaOptions ++ Seq("-cp", Path.makeString(classpath), "proguard.ProGuard", "-include", config.getAbsolutePath)
-    log.debug("Proguard command:")
-    log.debug("java " + options.mkString(" "))
-    val exitCode = Process("java", options) ! log
-    if (exitCode != 0) sys.error("Proguard failed with exit code [%s]" format exitCode)
+    def runProguard(config: File, javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
+      val options = javaOptions ++ Seq("-cp", Path.makeString(classpath), "proguard.ProGuard", "-include", config.getAbsolutePath)
+      log.debug("Proguard command:")
+      log.debug("java " + options.mkString(" "))
+      val exitCode = Process("java", options) ! log
+      if (exitCode != 0) sys.error("Proguard failed with exit code [%s]" format exitCode)
+    }
   }
 
   object ProguardOptions {
