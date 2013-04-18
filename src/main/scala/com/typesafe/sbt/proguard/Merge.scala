@@ -4,6 +4,7 @@ import sbt._
 import sbt.classpath.ClasspathUtilities
 import java.io.File
 import java.util.regex.Pattern
+import scala.util.matching.Regex
 
 object Merge {
   object EntryPath {
@@ -43,9 +44,23 @@ object Merge {
 
   object Strategy {
     val deduplicate = new Strategy {
-      def claims(path: EntryPath) = true
+      def claims(path: EntryPath): Boolean = true
       def merge(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
         Merge.deduplicate(path, entries, target, log)
+      }
+    }
+
+    def discard(exactly: String) = new Strategy {
+      def claims(path: EntryPath): Boolean = path.normalised == exactly
+      def merge(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
+        Merge.discard(entries, log)
+      }
+    }
+
+    def discard(matching: Regex) = new Strategy {
+      def claims(path: EntryPath): Boolean = matching.findFirstIn(path.normalised).isDefined
+      def merge(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
+        Merge.discard(entries, log)
       }
     }
   }
@@ -90,6 +105,10 @@ object Merge {
       if (path.isDirectory) path.file(target).mkdirs
       else copyFirst(entries, target)
     }
+  }
+
+  def discard(entries: Seq[Entry], log: Logger): Unit = {
+    entries foreach { e => log.debug("Discarding entry at '%s' from %s" format (e.path, e.source.name)) }
   }
 
   def copyFirst(entries: Seq[Entry], target: File): Unit = {

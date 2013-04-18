@@ -149,4 +149,11 @@ object SbtProguard extends Plugin {
         |}""".stripMargin.format(name)
     }
   }
+
+  object ProguardMerge {
+    import scala.util.matching.Regex
+
+    def discard(exactly: String): Merge.Strategy = Merge.Strategy.discard(exactly)
+    def discard(matching: Regex): Merge.Strategy = Merge.Strategy.discard(matching)
+  }
 }
