@@ -48,7 +48,7 @@ object SbtProguard extends Plugin {
       inputs <<= fullClasspath in Compile map { _.files },
       libraries <<= (binaryDeps, inputs) map { (deps, in) => deps filterNot in.toSet },
       outputs <<= artifactPath map { Seq(_) },
-      defaultInputFilter := Some("!META-INF/**"),
+      defaultInputFilter := None,
       inputFilter <<= defaultInputFilter map { default => { f => default } },
       filteredInputs <<= (inputs, inputFilter) map { (jars, filter) => jars map { jar => Filtered(jar, filter(jar)) } },
       filteredLibraries <<= libraries map noFilter,
