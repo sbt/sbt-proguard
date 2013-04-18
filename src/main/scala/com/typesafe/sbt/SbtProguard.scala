@@ -48,14 +48,14 @@ object SbtProguard extends Plugin {
       inputs <<= fullClasspath in Compile map { _.files },
       libraries <<= (binaryDeps, inputs) map { (deps, in) => deps filterNot in.toSet },
       outputs <<= artifactPath map { Seq(_) },
-      defaultInputFilter := None,
+      defaultInputFilter := Some("!META-INF/MANIFEST.MF"),
       inputFilter <<= defaultInputFilter map { default => { f => default } },
       filteredInputs <<= (inputs, inputFilter) map { (jars, filter) => jars map { jar => Filtered(jar, filter(jar)) } },
       filteredLibraries <<= libraries map noFilter,
       filteredOutputs <<= outputs map noFilter,
       merge := false,
       mergeDirectory <<= proguardDirectory / "merged",
-      mergeStrategies := Seq.empty,
+      mergeStrategies := ProguardMerge.defaultStrategies,
       mergedInputs <<= mergeTask,
       options <<= (mergedInputs, filteredLibraries, filteredOutputs) map { (ins, libs, outs) =>
         jarOptions("-injars", ins) ++
@@ -153,6 +153,10 @@ object SbtProguard extends Plugin {
   object ProguardMerge {
     import scala.util.matching.Regex
     import Merge.Strategy
+
+    def defaultStrategies = Seq(
+      discard("META-INF/MANIFEST.MF")
+    )
 
     def discard(exactly: String): Strategy = Strategy.matchingString(exactly, Merge.discard)
     def discard(pattern: Regex): Strategy = Strategy.matchingRegex(pattern, Merge.discard)
