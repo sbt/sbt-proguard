@@ -160,5 +160,7 @@ object SbtProguard extends Plugin {
     def rename(exactly: String): Strategy = Strategy.matchingString(exactly, Merge.rename)
     def rename(pattern: Regex): Strategy = Strategy.matchingRegex(pattern, Merge.rename)
 
+    def append(exactly: String): Strategy = Strategy.matchingString(exactly, Merge.append)
+    def append(pattern: Regex): Strategy = Strategy.matchingRegex(pattern, Merge.append)
   }
 }
