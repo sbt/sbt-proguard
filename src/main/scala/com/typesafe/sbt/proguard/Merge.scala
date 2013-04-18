@@ -50,12 +50,14 @@ object Merge {
   }
 
   object Strategy {
+    type RunMerge = (EntryPath, Seq[Entry], File, Logger) => Unit
+
     val deduplicate: Strategy = create(_ => true, Merge.deduplicate)
 
-    def discard(string: String): Strategy = create(EntryPath.matches(string), Merge.discard)
-    def discard(regex: Regex): Strategy = create(EntryPath.matches(regex), Merge.discard)
+    def matchingString(string: String, run: RunMerge): Strategy = create(EntryPath.matches(string), run)
+    def matchingRegex(regex: Regex, run: RunMerge): Strategy = create(EntryPath.matches(regex), run)
 
-    def create(claim: EntryPath => Boolean, run: (EntryPath, Seq[Entry], File, Logger) => Unit): Strategy = new Strategy {
+    def create(claim: EntryPath => Boolean, run: RunMerge): Strategy = new Strategy {
       def claims(path: EntryPath): Boolean = claim(path)
       def merge(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = run(path, entries, target, log)
     }
@@ -103,13 +105,23 @@ object Merge {
     }
   }
 
+  def copyFirst(entries: Seq[Entry], target: File): Unit = {
+    for (entry <- entries.headOption) {
+      IO.copyFile(entry.file, entry.path.file(target))
+    }
+  }
+
   def discard(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
     entries foreach { e => log.debug("Discarding entry at '%s' from %s" format (e.path, e.source.name)) }
   }
 
-  def copyFirst(entries: Seq[Entry], target: File): Unit = {
-    for (entry <- entries.headOption) {
-      IO.copyFile(entry.file, entry.path.file(target))
+  def rename(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
+    if (path.isDirectory) sys.error("Rename of directory entry at '%s' is not supported" format path)
+    for (entry <- entries) {
+      val file = path.file(target)
+      val renamed = new File(file.getParentFile, file.name + "-" + entry.source.name)
+      log.debug("Renaming entry at '%s' to '%s'" format (path, renamed.name))
+      IO.copyFile(entry.file, renamed)
     }
   }
 }

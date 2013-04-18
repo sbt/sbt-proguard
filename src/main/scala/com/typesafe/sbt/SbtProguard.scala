@@ -152,8 +152,13 @@ object SbtProguard extends Plugin {
 
   object ProguardMerge {
     import scala.util.matching.Regex
+    import Merge.Strategy
 
-    def discard(exactly: String): Merge.Strategy = Merge.Strategy.discard(exactly)
-    def discard(matching: Regex): Merge.Strategy = Merge.Strategy.discard(matching)
+    def discard(exactly: String): Strategy = Strategy.matchingString(exactly, Merge.discard)
+    def discard(pattern: Regex): Strategy = Strategy.matchingRegex(pattern, Merge.discard)
+
+    def rename(exactly: String): Strategy = Strategy.matchingString(exactly, Merge.rename)
+    def rename(pattern: Regex): Strategy = Strategy.matchingRegex(pattern, Merge.rename)
+
   }
 }
