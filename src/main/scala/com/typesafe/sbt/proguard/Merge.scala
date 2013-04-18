@@ -9,14 +9,21 @@ import scala.util.matching.Regex
 object Merge {
   object EntryPath {
     val pattern = Pattern.compile(if (File.separator == "\\") "\\\\" else File.separator)
+
+    def matches(s: String)(p: EntryPath) = p.matches(s)
+    def matches(r: Regex)(p: EntryPath) = p.matches(r)
   }
 
   case class EntryPath(path: String, isDirectory: Boolean) {
     val list = EntryPath.pattern.split(path).toList
     val name = if (list.isEmpty) "" else list.last
     val normalised = list.mkString("/") + (if (isDirectory) "/" else "")
-    override def toString = normalised
+
     def file(base: File) = base / path
+    def matches(s: String) = s == normalised
+    def matches(r: Regex) = r.findFirstIn(normalised).isDefined
+
+    override def toString = normalised
   }
 
   object Entry {
@@ -43,25 +50,14 @@ object Merge {
   }
 
   object Strategy {
-    val deduplicate = new Strategy {
-      def claims(path: EntryPath): Boolean = true
-      def merge(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
-        Merge.deduplicate(path, entries, target, log)
-      }
-    }
+    val deduplicate: Strategy = create(_ => true, Merge.deduplicate)
 
-    def discard(exactly: String) = new Strategy {
-      def claims(path: EntryPath): Boolean = path.normalised == exactly
-      def merge(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
-        Merge.discard(entries, log)
-      }
-    }
+    def discard(string: String): Strategy = create(EntryPath.matches(string), Merge.discard)
+    def discard(regex: Regex): Strategy = create(EntryPath.matches(regex), Merge.discard)
 
-    def discard(matching: Regex) = new Strategy {
-      def claims(path: EntryPath): Boolean = matching.findFirstIn(path.normalised).isDefined
-      def merge(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
-        Merge.discard(entries, log)
-      }
+    def create(claim: EntryPath => Boolean, run: (EntryPath, Seq[Entry], File, Logger) => Unit): Strategy = new Strategy {
+      def claims(path: EntryPath): Boolean = claim(path)
+      def merge(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = run(path, entries, target, log)
     }
   }
 
@@ -107,7 +103,7 @@ object Merge {
     }
   }
 
-  def discard(entries: Seq[Entry], log: Logger): Unit = {
+  def discard(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
     entries foreach { e => log.debug("Discarding entry at '%s' from %s" format (e.path, e.source.name)) }
   }
 
