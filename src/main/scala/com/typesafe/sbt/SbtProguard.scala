@@ -74,10 +74,17 @@ object SbtProguard extends Plugin {
       }
     )
 
-    def mergeTask = (merge, filteredInputs, mergeDirectory, mergeStrategies, streams) map { (doMerge, filtered, dir, strategies, s) =>
+    def mergeTask = (merge, filteredInputs, mergeDirectory, mergeStrategies, cacheDirectory, streams) map { (doMerge, filtered, dir, strategies, cache, s) =>
       if (doMerge) {
-        val inputs = filtered map (_.file)
-        Merge.merge(inputs, dir, strategies.reverse, s.log)
+        val cachedMerge = FileFunction.cached(cache / "proguard-merge", FilesInfo.hash) { _ =>
+          s.log.info("Merging inputs before proguard...")
+          IO.delete(dir)
+          val inputs = filtered map (_.file)
+          Merge.merge(inputs, dir, strategies.reverse, s.log)
+          dir.***.get.toSet
+        }
+        val inputs = inputFiles(filtered).toSet
+        cachedMerge(inputs)
         val filters = (filtered flatMap (_.filter)).toSet
         val combinedFilter = if (filters.nonEmpty) Some(filters.mkString(",")) else None
         Seq(Filtered(dir, combinedFilter))
@@ -85,20 +92,23 @@ object SbtProguard extends Plugin {
     }
 
     def proguardTask = (proguardConfiguration, options, javaOptions in proguard, managedClasspath, filteredInputs, outputs, cacheDirectory, streams) map {
-      (config, opts, javaOpts, cp, inputs, outputs, cache, s) => {
+      (config, opts, javaOpts, cp, filtered, outputs, cache, s) => {
         writeConfiguration(config, opts)
-        val cached = FileFunction.cached(cache / "proguard", FilesInfo.hash) { _ =>
+        val cachedProguard = FileFunction.cached(cache / "proguard", FilesInfo.hash) { _ =>
           outputs foreach IO.delete
           s.log.debug("Proguard configuration:")
           opts foreach (s.log.debug(_))
           runProguard(config, javaOpts, cp.files, s.log)
           outputs.toSet
         }
-        val files = inputs flatMap { i => if (i.file.isDirectory) i.file.***.get else Seq(i.file) }
-        val inputSet = (config +: files).toSet
-        cached(inputSet)
+        val inputs = (config +: inputFiles(filtered)).toSet
+        cachedProguard(inputs)
         outputs
       }
+    }
+
+    def inputFiles(inputs: Seq[Filtered]): Seq[File] = {
+      inputs flatMap { i => if (i.file.isDirectory) i.file.***.get else Seq(i.file) }
     }
 
     def writeConfiguration(config: File, options: Seq[String]): Unit = {

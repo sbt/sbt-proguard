@@ -64,14 +64,17 @@ object Merge {
             failed = true
         }
       }
-      if (failed) sys.error("Failed to merge all sources. Merge strategies can be used to resolve this.")
+      if (failed) {
+        sys.error("Failed to merge all sources. Merge strategies can be used to resolve this.")
+        IO.delete(target)
+      }
     }
   }
 
   def deduplicate(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
     if (entries.size > 1) {
       if (path.isDirectory) {
-        log.debug("Ignoring duplicate directory at '%s'" format path)
+        log.debug("Ignoring duplicate directory for '%s'" format path)
       } else {
         entries foreach { e => log.debug("Duplicate entry for '%s' from %s" format (e.path, e.source.name)) }
         sys.error("Duplicate entries for '%s'" format path)
