@@ -75,6 +75,7 @@ object Merge {
     if (entries.size > 1) {
       if (path.isDirectory) {
         log.debug("Ignoring duplicate directories at '%s'" format path)
+        path.file(target).mkdirs
       } else {
         entries foreach { e => log.debug("Matching entry at '%s' from %s" format (e.path, e.source.name)) }
         val hashes = (entries map { _.file.hashString }).toSet
@@ -86,7 +87,8 @@ object Merge {
         }
       }
     } else {
-      if (!path.isDirectory) copyFirst(entries, target)
+      if (path.isDirectory) path.file(target).mkdirs
+      else copyFirst(entries, target)
     }
   }
 
