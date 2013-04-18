@@ -2,6 +2,7 @@ package com.typesafe.sbt
 
 import sbt._
 import sbt.Keys._
+import com.typesafe.sbt.proguard.Merge
 
 object SbtProguard extends Plugin {
 
@@ -9,6 +10,7 @@ object SbtProguard extends Plugin {
 
   object ProguardKeys {
     import ProguardOptions.Filtered
+    import Merge.Strategy
 
     val proguardVersion = SettingKey[String]("proguard-version")
     val proguardDirectory = SettingKey[File]("proguard-directory")
@@ -22,6 +24,10 @@ object SbtProguard extends Plugin {
     val filteredInputs = TaskKey[Seq[Filtered]]("filtered-inputs")
     val filteredLibraries = TaskKey[Seq[Filtered]]("filtered-libraries")
     val filteredOutputs = TaskKey[Seq[Filtered]]("filtered-outputs")
+    val merge = TaskKey[Boolean]("merge")
+    val mergeDirectory = SettingKey[File]("merge-directory")
+    val mergeStrategies = TaskKey[Seq[Strategy]]("merge-strategies")
+    val mergedInputs = TaskKey[Seq[Filtered]]("merged-inputs")
     val options = TaskKey[Seq[String]]("options")
     val proguard = TaskKey[Seq[File]]("proguard")
   }
@@ -48,7 +54,11 @@ object SbtProguard extends Plugin {
       filteredInputs <++= packageBin in Compile map noFilter,
       filteredLibraries <<= libraries map noFilter,
       filteredOutputs <<= outputs map noFilter,
-      options <<= (filteredInputs, filteredLibraries, filteredOutputs) map { (ins, libs, outs) =>
+      merge := false,
+      mergeDirectory <<= proguardDirectory / "merged",
+      mergeStrategies := Seq.empty,
+      mergedInputs <<= mergeTask,
+      options <<= (mergedInputs, filteredLibraries, filteredOutputs) map { (ins, libs, outs) =>
         jarOptions("-injars", ins) ++
         jarOptions("-libraryjars", libs) ++
         jarOptions("-outjars", outs)
@@ -63,6 +73,16 @@ object SbtProguard extends Plugin {
         "net.sf.proguard" % "proguard-base" % version % Proguard.name
       }
     )
+
+    def mergeTask = (merge, filteredInputs, mergeDirectory, mergeStrategies, streams) map { (doMerge, filtered, dir, strategies, s) =>
+      if (doMerge) {
+        val inputs = filtered map (_.file)
+        Merge.merge(inputs, dir, strategies.reverse, s.log)
+        val filters = (filtered flatMap (_.filter)).toSet
+        val combinedFilter = if (filters.nonEmpty) Some(filters.mkString(",")) else None
+        Seq(Filtered(dir, combinedFilter))
+      } else filtered
+    }
 
     def proguardTask = (proguardConfiguration, options, javaOptions in proguard, managedClasspath, filteredInputs, outputs, cacheDirectory, streams) map {
       (config, opts, javaOpts, cp, inputs, outputs, cache, s) => {
