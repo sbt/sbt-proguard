@@ -128,8 +128,8 @@ object Merge {
   def append(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
     if (path.isDirectory) sys.error("Append of directory entry at '%s' is not supported" format path)
     for (entry <- entries) {
-      log.debug("Appending entry at '%s' from '%s'" format (path, entry.source.name))
       val file = path.file(target)
+      log.debug("Appending entry at '%s' from '%s'" format (path, entry.source.name))
       IO.append(file, IO.readBytes(entry.file))
     }
   }

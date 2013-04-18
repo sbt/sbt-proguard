@@ -21,6 +21,8 @@ object SbtProguard extends Plugin {
     val outputs               = TaskKey[Seq[File]]("outputs")
     val defaultInputFilter    = TaskKey[Option[String]]("default-input-filter")
     val inputFilter           = TaskKey[File => Option[String]]("input-filter")
+    val libraryFilter         = TaskKey[File => Option[String]]("library-filter")
+    val outputFilter          = TaskKey[File => Option[String]]("output-filter")
     val filteredInputs        = TaskKey[Seq[Filtered]]("filtered-inputs")
     val filteredLibraries     = TaskKey[Seq[Filtered]]("filtered-libraries")
     val filteredOutputs       = TaskKey[Seq[Filtered]]("filtered-outputs")
@@ -50,9 +52,11 @@ object SbtProguard extends Plugin {
       outputs <<= artifactPath map { Seq(_) },
       defaultInputFilter := Some("!META-INF/MANIFEST.MF"),
       inputFilter <<= defaultInputFilter map { default => { f => default } },
-      filteredInputs <<= (inputs, inputFilter) map { (jars, filter) => jars map { jar => Filtered(jar, filter(jar)) } },
-      filteredLibraries <<= libraries map noFilter,
-      filteredOutputs <<= outputs map noFilter,
+      libraryFilter := { f => None },
+      outputFilter := { f => None },
+      filteredInputs <<= (inputs, inputFilter) map filtered,
+      filteredLibraries <<= (libraries, libraryFilter) map filtered,
+      filteredOutputs <<= (outputs, outputFilter) map filtered,
       merge := false,
       mergeDirectory <<= proguardDirectory / "merged",
       mergeStrategies := ProguardMerge.defaultStrategies,
@@ -130,6 +134,10 @@ object SbtProguard extends Plugin {
     def noFilter(jar: File): Seq[Filtered] = Seq(Filtered(jar, None))
 
     def noFilter(jars: Seq[File]): Seq[Filtered] = filtered(jars, None)
+
+    def filtered(jars: Seq[File], filter: File => Option[String]): Seq[Filtered] = {
+      jars map { jar => Filtered(jar, filter(jar)) }
+    }
 
     def filtered(jars: Seq[File], filter: Option[String]): Seq[Filtered] = {
       jars map { jar => Filtered(jar, filter) }
