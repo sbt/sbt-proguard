@@ -12,24 +12,24 @@ object SbtProguard extends Plugin {
     import ProguardOptions.Filtered
     import Merge.Strategy
 
-    val proguardVersion = SettingKey[String]("proguard-version")
-    val proguardDirectory = SettingKey[File]("proguard-directory")
+    val proguardVersion       = SettingKey[String]("proguard-version")
+    val proguardDirectory     = SettingKey[File]("proguard-directory")
     val proguardConfiguration = SettingKey[File]("proguard-configuration")
-    val binaryDeps = TaskKey[Seq[File]]("binaryDeps")
-    val inputs = TaskKey[Seq[File]]("inputs")
-    val libraries = TaskKey[Seq[File]]("libraries")
-    val outputs = TaskKey[Seq[File]]("outputs")
-    val defaultInputFilter = TaskKey[Option[String]]("default-input-filter")
-    val inputFilter = TaskKey[File => Option[String]]("input-filter")
-    val filteredInputs = TaskKey[Seq[Filtered]]("filtered-inputs")
-    val filteredLibraries = TaskKey[Seq[Filtered]]("filtered-libraries")
-    val filteredOutputs = TaskKey[Seq[Filtered]]("filtered-outputs")
-    val merge = TaskKey[Boolean]("merge")
-    val mergeDirectory = SettingKey[File]("merge-directory")
-    val mergeStrategies = TaskKey[Seq[Strategy]]("merge-strategies")
-    val mergedInputs = TaskKey[Seq[Filtered]]("merged-inputs")
-    val options = TaskKey[Seq[String]]("options")
-    val proguard = TaskKey[Seq[File]]("proguard")
+    val binaryDeps            = TaskKey[Seq[File]]("binaryDeps")
+    val inputs                = TaskKey[Seq[File]]("inputs")
+    val libraries             = TaskKey[Seq[File]]("libraries")
+    val outputs               = TaskKey[Seq[File]]("outputs")
+    val defaultInputFilter    = TaskKey[Option[String]]("default-input-filter")
+    val inputFilter           = TaskKey[File => Option[String]]("input-filter")
+    val filteredInputs        = TaskKey[Seq[Filtered]]("filtered-inputs")
+    val filteredLibraries     = TaskKey[Seq[Filtered]]("filtered-libraries")
+    val filteredOutputs       = TaskKey[Seq[Filtered]]("filtered-outputs")
+    val merge                 = TaskKey[Boolean]("merge")
+    val mergeDirectory        = SettingKey[File]("merge-directory")
+    val mergeStrategies       = TaskKey[Seq[Strategy]]("merge-strategies")
+    val mergedInputs          = TaskKey[Seq[Filtered]]("merged-inputs")
+    val options               = TaskKey[Seq[String]]("options")
+    val proguard              = TaskKey[Seq[File]]("proguard")
   }
 
   lazy val proguardSettings: Seq[Setting[_]] = inConfig(Proguard)(ProguardSettings.default) ++ ProguardSettings.dependencies
@@ -152,19 +152,18 @@ object SbtProguard extends Plugin {
 
   object ProguardMerge {
     import scala.util.matching.Regex
-    import Merge.Strategy
+    import Merge.Strategy.{ matchingRegex, matchingString }
 
     def defaultStrategies = Seq(
       discard("META-INF/MANIFEST.MF")
     )
 
-    def discard(exactly: String): Strategy = Strategy.matchingString(exactly, Merge.discard)
-    def discard(pattern: Regex): Strategy = Strategy.matchingRegex(pattern, Merge.discard)
+    def discard(exactly: String) = matchingString(exactly, Merge.discard)
+    def rename( exactly: String) = matchingString(exactly, Merge.rename)
+    def append( exactly: String) = matchingString(exactly, Merge.append)
 
-    def rename(exactly: String): Strategy = Strategy.matchingString(exactly, Merge.rename)
-    def rename(pattern: Regex): Strategy = Strategy.matchingRegex(pattern, Merge.rename)
-
-    def append(exactly: String): Strategy = Strategy.matchingString(exactly, Merge.append)
-    def append(pattern: Regex): Strategy = Strategy.matchingRegex(pattern, Merge.append)
+    def discard(pattern: Regex) = matchingRegex(pattern, Merge.discard)
+    def rename( pattern: Regex) = matchingRegex(pattern, Merge.rename)
+    def append( pattern: Regex) = matchingRegex(pattern, Merge.append)
   }
 }
