@@ -65,7 +65,7 @@ object Merge {
         }
       }
       if (failed) {
-        sys.error("Failed to merge all sources. Merge strategies can be used to resolve this.")
+        sys.error("Failed to merge all inputs. Merge strategies can be used to resolve conflicts.")
         IO.delete(target)
       }
     }
@@ -74,10 +74,16 @@ object Merge {
   def deduplicate(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
     if (entries.size > 1) {
       if (path.isDirectory) {
-        log.debug("Ignoring duplicate directory for '%s'" format path)
+        log.debug("Ignoring duplicate directories at '%s'" format path)
       } else {
-        entries foreach { e => log.debug("Duplicate entry for '%s' from %s" format (e.path, e.source.name)) }
-        sys.error("Duplicate entries for '%s'" format path)
+        entries foreach { e => log.debug("Matching entry at '%s' from %s" format (e.path, e.source.name)) }
+        val hashes = (entries map { _.file.hashString }).toSet
+        if (hashes.size <= 1) {
+          log.debug("Identical duplicates found at '%s'" format path)
+          copyFirst(entries, target)
+        } else {
+          sys.error("Multiple entries found at '%s'" format path)
+        }
       }
     } else {
       if (!path.isDirectory) copyFirst(entries, target)
