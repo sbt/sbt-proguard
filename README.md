@@ -34,6 +34,37 @@ proguard:proguard
 ```
 
 
+Filters
+-------
+
+Proguard supports file filtering for inputs, libraries, and outputs. In
+sbt-proguard there are `File => Option[String]` settings for adding filters to
+files.
+
+For example, to add a `!META-INF/**` filter to just the scala-library jar:
+
+```scala
+ProguardKeys.inputFilter in Proguard := { file =>
+  file.name match {
+    case "scala-library.jar" => Some("!META-INF/**")
+    case _                   => None
+  }
+}
+```
+
+which will create the following proguard configuration:
+
+```
+-injars "/path/to/scala-library.jar"(!META-INF/**)
+```
+
+There are corresponding settings for libraries and outputs: `libraryFilter` and
+`outputFilter`.
+
+For more advanced usage the `filteredInputs`, `filteredLibraries`, and
+`filteredOutputs` settings can be set directly.
+
+
 Merging Duplicates
 ------------------
 
