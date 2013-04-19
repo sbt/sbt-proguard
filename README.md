@@ -65,24 +65,57 @@ For more advanced usage the `filteredInputs`, `filteredLibraries`, and
 `filteredOutputs` settings can be set directly.
 
 
-Merging Duplicates
-------------------
+Merging
+-------
 
-There is no built-in solution for merging duplicated files with sbt-proguard. It
-is possible, however, to simply use [sbt-assembly] to do the merging and then
-apply proguard to the assembled result.
+If the same path exists in multiple inputs then proguard will throw an error.
+The conflicting paths can be resolved using file filters, as described above,
+but this is not always the most useful approach. For example, `reference.conf`
+files for the Typesafe Config library need to be retained and not discarded.
 
-You can have the output from [sbt-assembly] as the only proguard input with:
+The sbt-proguard plugin supports pre-merging inputs, similar to creating an
+assembly jar first. To enable this merging use:
 
 ```scala
-ProguardKeys.filteredInputs in Proguard <<= AssemblyKeys.assembly map ProguardOptions.noFilter
+ProguardKeys.merge in Proguard := true
 ```
+
+Conflicting paths that are not identical will now fail at the merge stage. These
+conflicting paths can have merge strategies applied, similar to the sbt-assembly
+plugin.
+
+Helper methods for creating common merges are available. These are to `discard`,
+`rename`, or `append` the duplicate paths. The paths matched against in these
+helpers are normalised to be separated by `/` regardless of platform. Paths can
+be matched exactly with a string or with a regular expression.
+
+The default strategy is to only discard `META-INF/MANIFEST.MF`. This same
+strategy could be added with:
+
+```scala
+ProguardKeys.mergeStrategies in Proguard += ProguardMerge.discard("META-INF/MANIFEST.MF")
+```
+
+Or all `META-INF` contents could be discarded with a regular expression:
+
+```scala
+ProguardKeys.mergeStrategies in Proguard += ProguardMerge.discard("META-INF/.*".r)
+```
+
+To concatenate all `reference.conf` files together use:
+
+```scala
+ProguardKeys.mergeStrategies in Proguard += ProguardMerge.append("reference.conf")
+```
+
+Completely custom merge strategies can also be created. See the plugin source
+code for how this could be done.
 
 
 Sample projects
 ---------------
 
-There are [runnable sample projects][samples] included as sbt scripted tests.
+There are some [runnable sample projects][samples] included as sbt scripted tests.
 
 
 Mailing list
