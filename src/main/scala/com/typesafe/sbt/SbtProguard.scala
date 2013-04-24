@@ -167,11 +167,15 @@ object SbtProguard extends Plugin {
     )
 
     def discard(exactly: String) = matchingString(exactly, Merge.discard)
-    def rename( exactly: String) = matchingString(exactly, Merge.rename)
-    def append( exactly: String) = matchingString(exactly, Merge.append)
+    def first  (exactly: String) = matchingString(exactly, Merge.first)
+    def last   (exactly: String) = matchingString(exactly, Merge.last)
+    def rename (exactly: String) = matchingString(exactly, Merge.rename)
+    def append (exactly: String) = matchingString(exactly, Merge.append)
 
     def discard(pattern: Regex) = matchingRegex(pattern, Merge.discard)
-    def rename( pattern: Regex) = matchingRegex(pattern, Merge.rename)
-    def append( pattern: Regex) = matchingRegex(pattern, Merge.append)
+    def first  (pattern: Regex) = matchingRegex(pattern, Merge.first)
+    def last   (pattern: Regex) = matchingRegex(pattern, Merge.last)
+    def rename (pattern: Regex) = matchingRegex(pattern, Merge.rename)
+    def append (pattern: Regex) = matchingRegex(pattern, Merge.append)
   }
 }

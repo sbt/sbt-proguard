@@ -94,7 +94,7 @@ object Merge {
         val hashes = (entries map { _.file.hashString }).toSet
         if (hashes.size <= 1) {
           log.debug("Identical duplicates found at '%s'" format path)
-          copyFirst(entries, target)
+          copyFirst(entries, target, Some(log))
         } else {
           sys.error("Multiple entries found at '%s'" format path)
         }
@@ -105,14 +105,29 @@ object Merge {
     }
   }
 
-  def copyFirst(entries: Seq[Entry], target: File): Unit = {
-    for (entry <- entries.headOption) {
-      IO.copyFile(entry.file, entry.path.file(target))
-    }
+  def copyFirst(entries: Seq[Entry], target: File, log: Option[Logger] = None): Unit = {
+    entries.headOption foreach copyOne("first", target, log)
+  }
+
+  def copyLast(entries: Seq[Entry], target: File, log: Option[Logger] = None): Unit = {
+    entries.lastOption foreach copyOne("last", target, log)
+  }
+
+  def copyOne(label: String, target: File, log: Option[Logger] = None)(entry: Entry): Unit = {
+    log foreach { l => l.debug("Keeping %s entry at '%s' from %s" format (label, entry.path, entry.source.name)) }
+    IO.copyFile(entry.file, entry.path.file(target))
   }
 
   def discard(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
     entries foreach { e => log.debug("Discarding entry at '%s' from %s" format (e.path, e.source.name)) }
+  }
+
+  def first(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
+    copyFirst(entries, target, Some(log))
+  }
+
+  def last(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
+    copyLast(entries, target, Some(log))
   }
 
   def rename(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {

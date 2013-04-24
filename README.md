@@ -84,10 +84,17 @@ Conflicting paths that are not identical will now fail at the merge stage. These
 conflicting paths can have merge strategies applied, similar to the sbt-assembly
 plugin.
 
-Helper methods for creating common merges are available. These are to `discard`,
-`rename`, or `append` the duplicate paths. The paths matched against in these
-helpers are normalised to be separated by `/` regardless of platform. Paths can
-be matched exactly with a string or with a regular expression.
+Helper methods for creating common merges are available. These are:
+
+  - `discard` -- discard all matching entries
+  - `first` -- only keep the first entry
+  - `last` -- only keep the last entry
+  - `rename` -- rename entries adding the name of the source
+  - `append` -- append entries together into one file
+
+The paths matched against in these helpers are normalised to be separated by `/`
+regardless of platform. Paths can be matched exactly with a string or with a
+regular expression.
 
 The default strategy is to only discard `META-INF/MANIFEST.MF`. This same
 strategy could be added with:
