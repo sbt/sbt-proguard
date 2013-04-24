@@ -10,7 +10,7 @@ Add plugin
 Add plugin to `project/plugins.sbt`. For example:
 
 ```scala
-addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.0")
+addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.1")
 ```
 
 
@@ -151,7 +151,7 @@ The code for this sbt plugin is licensed under the [Apache 2.0 License][apache].
 [sbt]: https://github.com/sbt/sbt
 [ProGuard]: http://proguard.sourceforge.net/
 [sbt-assembly]: https://github.com/sbt/sbt-assembly
-[samples]: https://github.com/sbt/sbt-proguard/tree/v0.2.0/src/sbt-test/proguard
+[samples]: https://github.com/sbt/sbt-proguard/tree/v0.2.1/src/sbt-test/proguard
 [email]: http://groups.google.com/group/simple-build-tool
 [cla]: http://www.typesafe.com/contribute/cla
 [gpl]: http://www.gnu.org/licenses/gpl.html
