@@ -47,7 +47,7 @@ object SbtProguard extends Plugin {
       artifactPath <<= (proguardDirectory, artifactPath in packageBin in Compile) { (dir, path) => dir / path.getName },
       managedClasspath <<= (configuration, classpathTypes, update) map Classpaths.managedJars,
       binaryDeps <<= compile in Compile map { _.relations.allBinaryDeps.toSeq },
-      inputs <<= fullClasspath in Compile map { _.files },
+      inputs <<= fullClasspath in Runtime map { _.files },
       libraries <<= (binaryDeps, inputs) map { (deps, in) => deps filterNot in.toSet },
       outputs <<= artifactPath map { Seq(_) },
       defaultInputFilter := Some("!META-INF/MANIFEST.MF"),
