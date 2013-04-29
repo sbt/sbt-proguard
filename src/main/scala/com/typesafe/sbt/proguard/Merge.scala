@@ -123,11 +123,13 @@ object Merge {
   }
 
   def first(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
-    copyFirst(entries, target, Some(log))
+    if (path.isDirectory) path.file(target).mkdirs
+    else copyFirst(entries, target, Some(log))
   }
 
   def last(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
-    copyLast(entries, target, Some(log))
+    if (path.isDirectory) path.file(target).mkdirs
+    else copyLast(entries, target, Some(log))
   }
 
   def rename(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
