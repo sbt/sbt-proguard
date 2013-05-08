@@ -115,8 +115,7 @@ object SbtProguard extends Plugin {
     }
 
     def writeConfiguration(config: File, options: Seq[String]): Unit = {
-      val opts = options mkString "\n"
-      IO.write(config, opts)
+      IO.writeLines(config, options)
     }
 
     def runProguard(config: File, javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
