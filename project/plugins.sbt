@@ -1,4 +1,2 @@
 
-resolvers <+= sbtResolver
-
-libraryDependencies <+= sbtVersion { v => "org.scala-sbt" % "scripted-plugin" % v }
+addSbtPlugin("net.virtual-void" % "sbt-cross-building" % "0.8.0")
