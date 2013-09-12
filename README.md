@@ -125,12 +125,6 @@ Sample projects
 There are some [runnable sample projects][samples] included as sbt scripted tests.
 
 
-Mailing list
-------------
-
-Please use the [sbt mailing list][email] and prefix the subject with `[sbt-proguard]`.
-
-
 Contribution policy
 -------------------
 
@@ -152,7 +146,6 @@ The code for this sbt plugin is licensed under the [Apache 2.0 License][apache].
 [ProGuard]: http://proguard.sourceforge.net/
 [sbt-assembly]: https://github.com/sbt/sbt-assembly
 [samples]: https://github.com/sbt/sbt-proguard/tree/v0.2.2/src/sbt-test/proguard
-[email]: http://groups.google.com/group/simple-build-tool
 [cla]: http://www.typesafe.com/contribute/cla
 [gpl]: http://www.gnu.org/licenses/gpl.html
 [except]: http://proguard.sourceforge.net/GPL_exception.html
