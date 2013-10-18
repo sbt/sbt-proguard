@@ -81,7 +81,7 @@ ProguardKeys.merge in Proguard := true
 ```
 
 Conflicting paths that are not identical will now fail at the merge stage. These
-conflicting paths can have merge strategies applied, similar to the sbt-assembly
+conflicting paths can have merge strategies applied, similar to the [sbt-assembly]
 plugin.
 
 Helper methods for creating common merges are available. These are:
