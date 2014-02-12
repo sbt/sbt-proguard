@@ -3,6 +3,8 @@ sbt-proguard
 
 [sbt] plugin for running [ProGuard]. This plugin requires sbt 0.12 or 0.13.
 
+[![Build Status](https://travis-ci.org/sbt/sbt-proguard.png?branch=master)](https://travis-ci.org/sbt/sbt-proguard)
+
 
 Add plugin
 ----------
