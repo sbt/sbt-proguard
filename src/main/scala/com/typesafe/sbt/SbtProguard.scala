@@ -120,7 +120,6 @@ object SbtProguard extends Plugin {
 
     def runProguard(config: File, javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
       val options = javaOptions ++ Seq("-cp", Path.makeString(classpath), "proguard.ProGuard", "-include", config.getAbsolutePath)
-      println(s"Proguard options: $options")
       log.debug("Proguard command:")
       log.debug("java " + options.mkString(" "))
       val exitCode = Process("java", options) ! log
