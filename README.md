@@ -117,6 +117,15 @@ To concatenate all `reference.conf` files together use:
 ProguardKeys.mergeStrategies in Proguard += ProguardMerge.append("reference.conf")
 ```
 
+To discard all `.html` and `.txt` files you may use two strategies together:
+
+```scala
+ProguardKeys.mergeStrategies in Proguard ++= Seq(
+  ProguardMerge.discard("\\.html$".r),
+  ProguardMerge.discard("\\.txt$".r) 
+)
+```
+
 Completely custom merge strategies can also be created. See the plugin source
 code for how this could be done.
 
