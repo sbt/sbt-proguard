@@ -1,16 +1,16 @@
 package com.typesafe.sbt
 
-import sbt._
-import sbt.Keys._
 import com.typesafe.sbt.proguard.Merge
+import sbt.Keys._
+import sbt._
 
 object SbtProguard extends Plugin {
 
   val Proguard = config("proguard").hide
 
   object ProguardKeys {
-    import ProguardOptions.Filtered
     import Merge.Strategy
+    import ProguardOptions.Filtered
 
     val proguardVersion       = SettingKey[String]("proguard-version")
     val proguardDirectory     = SettingKey[File]("proguard-directory")
@@ -41,7 +41,7 @@ object SbtProguard extends Plugin {
     import ProguardOptions._
 
     def default: Seq[Setting[_]] = Seq(
-      proguardVersion := "4.9",
+      proguardVersion := "5.2.1",
       proguardDirectory <<= crossTarget / "proguard",
       proguardConfiguration <<= proguardDirectory / "configuration.pro",
       artifactPath <<= (proguardDirectory, artifactPath in packageBin in Compile) { (dir, path) => dir / path.getName },
@@ -158,8 +158,9 @@ object SbtProguard extends Plugin {
   }
 
   object ProguardMerge {
+    import Merge.Strategy.{matchingRegex, matchingString}
+
     import scala.util.matching.Regex
-    import Merge.Strategy.{ matchingRegex, matchingString }
 
     def defaultStrategies = Seq(
       discard("META-INF/MANIFEST.MF")

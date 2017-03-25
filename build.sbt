@@ -1,4 +1,3 @@
-
 sbtPlugin := true
 
 organization := "com.typesafe.sbt"
