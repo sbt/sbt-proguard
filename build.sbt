@@ -16,4 +16,4 @@ crossBuildingSettings
 CrossBuilding.crossSbtVersions := Seq("0.12", "0.13")
 CrossBuilding.scriptedSettings
 
-scriptedLaunchOpts := Seq("-Xms512m", "-Xmx512m", "-XX:MaxPermSize=256m")
+scriptedLaunchOpts := Seq("-Xms512m", "-Xmx512m", "-XX:MaxPermSize=256m", s"-Dproject.version=${version.value}")
