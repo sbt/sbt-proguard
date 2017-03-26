@@ -2,21 +2,18 @@
 sbtPlugin := true
 
 organization := "com.typesafe.sbt"
-
 name := "sbt-proguard"
-
 version := "0.2.3-SNAPSHOT"
 
 publishMavenStyle := false
 
-publishTo <<= isSnapshot { snapshot =>
-  if (snapshot) Some(Classpaths.sbtPluginSnapshots) else Some(Classpaths.sbtPluginReleases)
-}
+bintrayOrganization := Some("sbt")
+bintrayRepository := "sbt-plugin-releases"
+bintrayPackage := name.value
+bintrayReleaseOnPublish := false
 
 crossBuildingSettings
-
 CrossBuilding.crossSbtVersions := Seq("0.12", "0.13")
-
 CrossBuilding.scriptedSettings
 
 scriptedLaunchOpts := Seq("-Xms512m", "-Xmx512m", "-XX:MaxPermSize=256m")
