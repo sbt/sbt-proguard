@@ -12,8 +12,6 @@ bintrayRepository := "sbt-plugin-releases"
 bintrayPackage := name.value
 bintrayReleaseOnPublish := false
 
-crossBuildingSettings
-CrossBuilding.crossSbtVersions := Seq("0.12", "0.13")
-CrossBuilding.scriptedSettings
+crossSbtVersions := Seq("0.13", "1.0.0")
 
-scriptedLaunchOpts := Seq("-Xms512m", "-Xmx512m", "-XX:MaxPermSize=256m", s"-Dproject.version=${version.value}")
+//scriptedLaunchOpts := Seq("-Xms512m", "-Xmx512m", "-XX:MaxPermSize=256m", s"-Dproject.version=${version.value}")

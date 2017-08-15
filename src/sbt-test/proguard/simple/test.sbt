@@ -1,6 +1,6 @@
 // for sbt scripted test:
-TaskKey[Unit]("check") <<= (ProguardKeys.proguard in Proguard) map { jar =>
+TaskKey[Unit]("check") := {
   val expected = "test\n"
-  val output = Process("java", Seq("-jar", jar.absString)).!!
+  val output = Process("java", Seq("-jar", (ProguardKeys.proguard in Proguard).value.absString)).!!
   if (output != expected) sys.error("Unexpected output:\n" + output)
 }

@@ -46,7 +46,7 @@ object Merge {
         IO.unzip(source, unzipped)
         unzipped
       } else source
-      (base.*** --- base).get x relativeTo(base) map { p => Entry(p._2, p._1, source) }
+      (base.*** --- base).get pair relativeTo(base) map { p => Entry(p._2, p._1, source) }
     }
   }
 

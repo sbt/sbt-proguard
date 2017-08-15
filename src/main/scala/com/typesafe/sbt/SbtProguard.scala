@@ -1,113 +1,111 @@
 package com.typesafe.sbt
 
-import sbt._
-import sbt.Keys._
 import com.typesafe.sbt.proguard.Merge
+import sbt.Keys._
+import sbt.{Def, _}
 
 object SbtProguard extends Plugin {
 
   val Proguard = config("proguard").hide
 
   object ProguardKeys {
-    import ProguardOptions.Filtered
-    import Merge.Strategy
 
-    val proguardVersion       = SettingKey[String]("proguard-version")
-    val proguardDirectory     = SettingKey[File]("proguard-directory")
+    import Merge.Strategy
+    import ProguardOptions.Filtered
+
+    val proguardVersion = SettingKey[String]("proguard-version")
+    val proguardDirectory = SettingKey[File]("proguard-directory")
     val proguardConfiguration = SettingKey[File]("proguard-configuration")
-    val binaryDeps            = TaskKey[Seq[File]]("binaryDeps")
-    val inputs                = TaskKey[Seq[File]]("inputs")
-    val libraries             = TaskKey[Seq[File]]("libraries")
-    val outputs               = TaskKey[Seq[File]]("outputs")
-    val defaultInputFilter    = TaskKey[Option[String]]("default-input-filter")
-    val inputFilter           = TaskKey[File => Option[String]]("input-filter")
-    val libraryFilter         = TaskKey[File => Option[String]]("library-filter")
-    val outputFilter          = TaskKey[File => Option[String]]("output-filter")
-    val filteredInputs        = TaskKey[Seq[Filtered]]("filtered-inputs")
-    val filteredLibraries     = TaskKey[Seq[Filtered]]("filtered-libraries")
-    val filteredOutputs       = TaskKey[Seq[Filtered]]("filtered-outputs")
-    val merge                 = TaskKey[Boolean]("merge")
-    val mergeDirectory        = SettingKey[File]("merge-directory")
-    val mergeStrategies       = TaskKey[Seq[Strategy]]("merge-strategies")
-    val mergedInputs          = TaskKey[Seq[Filtered]]("merged-inputs")
-    val options               = TaskKey[Seq[String]]("options")
-    val proguard              = TaskKey[Seq[File]]("proguard")
+    val binaryDeps = TaskKey[Seq[File]]("binaryDeps")
+    val inputs = TaskKey[Seq[File]]("inputs")
+    val libraries = TaskKey[Seq[File]]("libraries")
+    val outputs = TaskKey[Seq[File]]("outputs")
+    val defaultInputFilter = TaskKey[Option[String]]("default-input-filter")
+    val inputFilter = TaskKey[File => Option[String]]("input-filter")
+    val libraryFilter = TaskKey[File => Option[String]]("library-filter")
+    val outputFilter = TaskKey[File => Option[String]]("output-filter")
+    val filteredInputs = TaskKey[Seq[Filtered]]("filtered-inputs")
+    val filteredLibraries = TaskKey[Seq[Filtered]]("filtered-libraries")
+    val filteredOutputs = TaskKey[Seq[Filtered]]("filtered-outputs")
+    val merge = TaskKey[Boolean]("merge")
+    val mergeDirectory = SettingKey[File]("merge-directory")
+    val mergeStrategies = TaskKey[Seq[Strategy]]("merge-strategies")
+    val mergedInputs = TaskKey[Seq[Filtered]]("merged-inputs")
+    val options = TaskKey[Seq[String]]("options")
+    val proguard = TaskKey[Seq[File]]("proguard")
   }
 
   lazy val proguardSettings: Seq[Setting[_]] = inConfig(Proguard)(ProguardSettings.default) ++ ProguardSettings.dependencies
 
   object ProguardSettings {
+
     import ProguardKeys._
     import ProguardOptions._
 
     def default: Seq[Setting[_]] = Seq(
       proguardVersion := "4.9",
-      proguardDirectory <<= crossTarget / "proguard",
-      proguardConfiguration <<= proguardDirectory / "configuration.pro",
-      artifactPath <<= (proguardDirectory, artifactPath in packageBin in Compile) { (dir, path) => dir / path.getName },
-      managedClasspath <<= (configuration, classpathTypes, update) map Classpaths.managedJars,
-      binaryDeps <<= compile in Compile map { _.relations.allBinaryDeps.toSeq },
-      inputs <<= fullClasspath in Runtime map { _.files },
-      libraries <<= (binaryDeps, inputs) map { (deps, in) => deps filterNot in.toSet },
-      outputs <<= artifactPath map { Seq(_) },
+      proguardDirectory := crossTarget.value / "proguard",
+      proguardConfiguration := proguardDirectory.value / "configuration.pro",
+      artifactPath := proguardDirectory.value / (artifactPath in packageBin in Compile).value.getName,
+      managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
+      binaryDeps := (compile in Compile).value.relations.allBinaryDeps.toSeq,
+      inputs := (fullClasspath in Runtime).value.files,
+      libraries := binaryDeps.value filterNot inputs.value.toSet,
+      outputs := Seq(artifactPath.value),
       defaultInputFilter := Some("!META-INF/MANIFEST.MF"),
-      inputFilter <<= defaultInputFilter map { default => { f => default } },
+      inputFilter := (_ => defaultInputFilter.value),
       libraryFilter := { f => None },
       outputFilter := { f => None },
-      filteredInputs <<= (inputs, inputFilter) map filtered,
-      filteredLibraries <<= (libraries, libraryFilter) map filtered,
-      filteredOutputs <<= (outputs, outputFilter) map filtered,
+      filteredInputs := filtered(inputs.value, inputFilter.value),
+      filteredLibraries := filtered(libraries.value, libraryFilter.value),
+      filteredOutputs := filtered(outputs.value, outputFilter.value),
       merge := false,
-      mergeDirectory <<= proguardDirectory / "merged",
+      mergeDirectory := proguardDirectory.value / "merged",
       mergeStrategies := ProguardMerge.defaultStrategies,
-      mergedInputs <<= mergeTask,
-      options <<= (mergedInputs, filteredLibraries, filteredOutputs) map { (ins, libs, outs) =>
-        jarOptions("-injars", ins) ++
-        jarOptions("-libraryjars", libs) ++
-        jarOptions("-outjars", outs)
+      mergedInputs := mergeTask.value,
+      options := {
+        jarOptions("-injars", mergedInputs.value) ++
+          jarOptions("-libraryjars", filteredLibraries.value) ++
+          jarOptions("-outjars", filteredOutputs.value)
       },
       javaOptions in proguard := Seq("-Xmx256M"),
-      proguard <<= proguardTask
+      ProguardKeys.proguard := proguardTask.value
     )
 
     def dependencies: Seq[Setting[_]] = Seq(
       ivyConfigurations += Proguard,
-      libraryDependencies <+= (proguardVersion in Proguard) { version =>
-        "net.sf.proguard" % "proguard-base" % version % Proguard.name
-      }
+      libraryDependencies += "net.sf.proguard" % "proguard-base" % (proguardVersion in Proguard).value % Proguard.name
     )
 
-    def mergeTask = (merge, filteredInputs, mergeDirectory, mergeStrategies, cacheDirectory, streams) map { (doMerge, filtered, dir, strategies, cache, s) =>
-      if (doMerge) {
-        val cachedMerge = FileFunction.cached(cache / "proguard-merge", FilesInfo.hash) { _ =>
-          s.log.info("Merging inputs before proguard...")
-          IO.delete(dir)
-          val inputs = filtered map (_.file)
-          Merge.merge(inputs, dir, strategies.reverse, s.log)
-          dir.***.get.toSet
+    val mergeTask = Def.task {
+      if (merge.value) {
+        val cachedMerge = FileFunction.cached(streams.value.cacheDirectory / "proguard-merge", FilesInfo.hash) { _ =>
+          streams.value.log.info("Merging inputs before proguard...")
+          IO.delete(mergeDirectory.value)
+          val inputs = filteredInputs.value map (_.file)
+          Merge.merge(inputs, mergeDirectory.value, mergeStrategies.value.reverse, streams.value.log)
+          mergeDirectory.value.***.get.toSet
         }
-        val inputs = inputFiles(filtered).toSet
+        val inputs = inputFiles(filteredInputs.value).toSet
         cachedMerge(inputs)
-        val filters = (filtered flatMap (_.filter)).toSet
+        val filters = (filteredInputs.value flatMap (_.filter)).toSet
         val combinedFilter = if (filters.nonEmpty) Some(filters.mkString(",")) else None
-        Seq(Filtered(dir, combinedFilter))
-      } else filtered
+        Seq(Filtered(mergeDirectory.value, combinedFilter))
+      } else filteredInputs.value
     }
 
-    def proguardTask = (proguardConfiguration, options, javaOptions in proguard, managedClasspath, filteredInputs, outputs, cacheDirectory, streams) map {
-      (config, opts, javaOpts, cp, filtered, outputs, cache, s) => {
-        writeConfiguration(config, opts)
-        val cachedProguard = FileFunction.cached(cache / "proguard", FilesInfo.hash) { _ =>
-          outputs foreach IO.delete
-          s.log.debug("Proguard configuration:")
-          opts foreach (s.log.debug(_))
-          runProguard(config, javaOpts, cp.files, s.log)
-          outputs.toSet
-        }
-        val inputs = (config +: inputFiles(filtered)).toSet
-        cachedProguard(inputs)
-        outputs
+    val proguardTask = Def.task {
+      writeConfiguration(proguardConfiguration.value, options.value)
+      val cachedProguard = FileFunction.cached(streams.value.cacheDirectory / "proguard", FilesInfo.hash) { _ =>
+        outputs.value foreach IO.delete
+        streams.value.log.debug("Proguard configuration:")
+        options.value foreach (streams.value.log.debug(_))
+        runProguard(proguardConfiguration.value, (javaOptions in proguard).value, managedClasspath.value.files, streams.value.log)
+        outputs.value.toSet
       }
+      val inputs = (proguardConfiguration.value +: inputFiles(filteredInputs.value)).toSet
+      cachedProguard(inputs)
+      outputs.value
     }
 
     def inputFiles(inputs: Seq[Filtered]): Seq[File] = {
@@ -128,6 +126,7 @@ object SbtProguard extends Plugin {
   }
 
   object ProguardOptions {
+
     case class Filtered(file: File, filter: Option[String])
 
     def noFilter(jar: File): Seq[Filtered] = Seq(Filtered(jar, None))
@@ -143,11 +142,13 @@ object SbtProguard extends Plugin {
     }
 
     def filterString(filter: Option[String]): String = {
-      filter map { "(" + _ + ")" } getOrElse ""
+      filter map {
+        "(" + _ + ")"
+      } getOrElse ""
     }
 
     def jarOptions(option: String, jars: Seq[Filtered]): Seq[String] = {
-      jars map { jar => "%s \"%s\"%s" format (option, jar.file.getCanonicalPath, filterString(jar.filter)) }
+      jars map { jar => "%s \"%s\"%s" format(option, jar.file.getCanonicalPath, filterString(jar.filter)) }
     }
 
     def keepMain(name: String): String = {
@@ -158,23 +159,26 @@ object SbtProguard extends Plugin {
   }
 
   object ProguardMerge {
+
+    import Merge.Strategy.{matchingRegex, matchingString}
+
     import scala.util.matching.Regex
-    import Merge.Strategy.{ matchingRegex, matchingString }
 
     def defaultStrategies = Seq(
       discard("META-INF/MANIFEST.MF")
     )
 
     def discard(exactly: String) = matchingString(exactly, Merge.discard)
-    def first  (exactly: String) = matchingString(exactly, Merge.first)
-    def last   (exactly: String) = matchingString(exactly, Merge.last)
-    def rename (exactly: String) = matchingString(exactly, Merge.rename)
-    def append (exactly: String) = matchingString(exactly, Merge.append)
+    def first(exactly: String) = matchingString(exactly, Merge.first)
+    def last(exactly: String) = matchingString(exactly, Merge.last)
+    def rename(exactly: String) = matchingString(exactly, Merge.rename)
+    def append(exactly: String) = matchingString(exactly, Merge.append)
 
     def discard(pattern: Regex) = matchingRegex(pattern, Merge.discard)
-    def first  (pattern: Regex) = matchingRegex(pattern, Merge.first)
-    def last   (pattern: Regex) = matchingRegex(pattern, Merge.last)
-    def rename (pattern: Regex) = matchingRegex(pattern, Merge.rename)
-    def append (pattern: Regex) = matchingRegex(pattern, Merge.append)
+    def first(pattern: Regex) = matchingRegex(pattern, Merge.first)
+    def last(pattern: Regex) = matchingRegex(pattern, Merge.last)
+    def rename(pattern: Regex) = matchingRegex(pattern, Merge.rename)
+    def append(pattern: Regex) = matchingRegex(pattern, Merge.append)
   }
+
 }
