@@ -2,13 +2,16 @@ package com.typesafe.sbt
 
 import com.typesafe.sbt.proguard.Merge
 import sbt.Keys._
+import sbt.internal.inc.Analysis
 import sbt.{Def, _}
 
-object SbtProguard extends Plugin {
+import scala.sys.process.Process
+
+object SbtProguard extends AutoPlugin {
 
   val Proguard = config("proguard").hide
 
-  object ProguardKeys {
+  object autoImport {
 
     import Merge.Strategy
     import ProguardOptions.Filtered
@@ -35,25 +38,29 @@ object SbtProguard extends Plugin {
     val proguard = TaskKey[Seq[File]]("proguard")
   }
 
-  lazy val proguardSettings: Seq[Setting[_]] = inConfig(Proguard)(ProguardSettings.default) ++ ProguardSettings.dependencies
+  override lazy val projectSettings: Seq[Setting[_]] =
+    inConfig(Proguard)(ProguardSettings.default) ++ ProguardSettings.dependencies
 
   object ProguardSettings {
 
-    import ProguardKeys._
+    import autoImport._
     import ProguardOptions._
 
     def default: Seq[Setting[_]] = Seq(
-      proguardVersion := "4.9",
+      proguardVersion := "5.3.3",
       proguardDirectory := crossTarget.value / "proguard",
       proguardConfiguration := proguardDirectory.value / "configuration.pro",
       artifactPath := proguardDirectory.value / (artifactPath in packageBin in Compile).value.getName,
       managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-      binaryDeps := (compile in Compile).value.relations.allBinaryDeps.toSeq,
+      binaryDeps := (compile in Compile).value.asInstanceOf[Analysis].relations.allProducts.toSeq,
       inputs := (fullClasspath in Runtime).value.files,
       libraries := binaryDeps.value filterNot inputs.value.toSet,
       outputs := Seq(artifactPath.value),
       defaultInputFilter := Some("!META-INF/MANIFEST.MF"),
-      inputFilter := (_ => defaultInputFilter.value),
+      inputFilter := {
+        val defaultInputFilterValue = defaultInputFilter.value
+        _ => defaultInputFilterValue
+      },
       libraryFilter := { f => None },
       outputFilter := { f => None },
       filteredInputs := filtered(inputs.value, inputFilter.value),
@@ -69,7 +76,7 @@ object SbtProguard extends Plugin {
           jarOptions("-outjars", filteredOutputs.value)
       },
       javaOptions in proguard := Seq("-Xmx256M"),
-      ProguardKeys.proguard := proguardTask.value
+      autoImport.proguard := proguardTask.value
     )
 
     def dependencies: Seq[Setting[_]] = Seq(
@@ -78,30 +85,39 @@ object SbtProguard extends Plugin {
     )
 
     val mergeTask = Def.task {
+      val streamsValue = streams.value
+      val mergeDirectoryValue = mergeDirectory.value
+      val mergeStrategiesValue = mergeStrategies.value
+      val filteredInputsValue = filteredInputs.value
       if (merge.value) {
-        val cachedMerge = FileFunction.cached(streams.value.cacheDirectory / "proguard-merge", FilesInfo.hash) { _ =>
-          streams.value.log.info("Merging inputs before proguard...")
-          IO.delete(mergeDirectory.value)
-          val inputs = filteredInputs.value map (_.file)
-          Merge.merge(inputs, mergeDirectory.value, mergeStrategies.value.reverse, streams.value.log)
-          mergeDirectory.value.***.get.toSet
+        val cachedMerge = FileFunction.cached(streamsValue.cacheDirectory / "proguard-merge", FilesInfo.hash) { _ =>
+          streamsValue.log.info("Merging inputs before proguard...")
+          IO.delete(mergeDirectoryValue)
+          val inputs = filteredInputsValue map (_.file)
+          Merge.merge(inputs, mergeDirectoryValue, mergeStrategiesValue.reverse, streamsValue.log)
+          mergeDirectoryValue.allPaths.get.toSet
         }
-        val inputs = inputFiles(filteredInputs.value).toSet
+        val inputs = inputFiles(filteredInputsValue).toSet
         cachedMerge(inputs)
-        val filters = (filteredInputs.value flatMap (_.filter)).toSet
+        val filters = (filteredInputsValue flatMap (_.filter)).toSet
         val combinedFilter = if (filters.nonEmpty) Some(filters.mkString(",")) else None
-        Seq(Filtered(mergeDirectory.value, combinedFilter))
-      } else filteredInputs.value
+        Seq(Filtered(mergeDirectoryValue, combinedFilter))
+      } else filteredInputsValue
     }
 
     val proguardTask = Def.task {
       writeConfiguration(proguardConfiguration.value, options.value)
+      val proguardConfigurationValue = proguardConfiguration.value
+      val javaOptionsInProguardValue = (javaOptions in proguard).value
+      val managedClasspathValue = managedClasspath.value
+      val streamsValue = streams.value
+      val outputsValue = outputs.value
       val cachedProguard = FileFunction.cached(streams.value.cacheDirectory / "proguard", FilesInfo.hash) { _ =>
-        outputs.value foreach IO.delete
-        streams.value.log.debug("Proguard configuration:")
-        options.value foreach (streams.value.log.debug(_))
-        runProguard(proguardConfiguration.value, (javaOptions in proguard).value, managedClasspath.value.files, streams.value.log)
-        outputs.value.toSet
+        outputsValue foreach IO.delete
+        streamsValue.log.debug("Proguard configuration:")
+        options.value foreach (streamsValue.log.debug(_))
+        runProguard(proguardConfigurationValue, javaOptionsInProguardValue, managedClasspathValue.files, streamsValue.log)
+        outputsValue.toSet
       }
       val inputs = (proguardConfiguration.value +: inputFiles(filteredInputs.value)).toSet
       cachedProguard(inputs)
@@ -109,7 +125,7 @@ object SbtProguard extends Plugin {
     }
 
     def inputFiles(inputs: Seq[Filtered]): Seq[File] = {
-      inputs flatMap { i => if (i.file.isDirectory) i.file.***.get else Seq(i.file) }
+      inputs flatMap { i => if (i.file.isDirectory) i.file.allPaths.get else Seq(i.file) }
     }
 
     def writeConfiguration(config: File, options: Seq[String]): Unit = {

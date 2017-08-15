@@ -1,9 +1,12 @@
 package com.typesafe.sbt.proguard
 
 import sbt._
-import sbt.classpath.ClasspathUtilities
+import sbt.io.Path._
 import java.io.File
 import java.util.regex.Pattern
+
+import sbt.internal.inc.classpath.ClasspathUtilities
+
 import scala.util.matching.Regex
 
 object Merge {
@@ -46,7 +49,7 @@ object Merge {
         IO.unzip(source, unzipped)
         unzipped
       } else source
-      (base.*** --- base).get pair relativeTo(base) map { p => Entry(p._2, p._1, source) }
+      (base.allPaths --- base).get pair relativeTo(base) map { p => Entry(p._2, p._1, source) }
     }
   }
 
