@@ -52,7 +52,7 @@ object SbtProguard extends AutoPlugin {
       proguardConfiguration := proguardDirectory.value / "configuration.pro",
       artifactPath := proguardDirectory.value / (artifactPath in packageBin in Compile).value.getName,
       managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-      binaryDeps := (compile in Compile).value.asInstanceOf[Analysis].relations.allProducts.toSeq,
+      binaryDeps := (compile in Compile).value.asInstanceOf[Analysis].relations.allLibraryDeps.toSeq, // TODO: get relations safe
       inputs := (fullClasspath in Runtime).value.files,
       libraries := binaryDeps.value filterNot inputs.value.toSet,
       outputs := Seq(artifactPath.value),
