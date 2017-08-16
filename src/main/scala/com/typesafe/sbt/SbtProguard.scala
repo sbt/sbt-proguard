@@ -9,12 +9,12 @@ import scala.sys.process.Process
 
 object SbtProguard extends AutoPlugin {
 
-  val Proguard = config("proguard").hide
-
   object autoImport {
 
     import Merge.Strategy
     import ProguardOptions.Filtered
+
+    val Proguard = config("proguard").hide
 
     val proguardVersion = SettingKey[String]("proguard-version")
     val proguardDirectory = SettingKey[File]("proguard-directory")
@@ -36,10 +36,67 @@ object SbtProguard extends AutoPlugin {
     val mergedInputs = TaskKey[Seq[Filtered]]("merged-inputs")
     val options = TaskKey[Seq[String]]("options")
     val proguard = TaskKey[Seq[File]]("proguard")
+
+    object ProguardOptions {
+
+      case class Filtered(file: File, filter: Option[String])
+
+      def noFilter(jar: File): Seq[Filtered] = Seq(Filtered(jar, None))
+
+      def noFilter(jars: Seq[File]): Seq[Filtered] = filtered(jars, None)
+
+      def filtered(jars: Seq[File], filter: File => Option[String]): Seq[Filtered] = {
+        jars map { jar => Filtered(jar, filter(jar)) }
+      }
+
+      def filtered(jars: Seq[File], filter: Option[String]): Seq[Filtered] = {
+        jars map { jar => Filtered(jar, filter) }
+      }
+
+      def filterString(filter: Option[String]): String = {
+        filter map {
+          "(" + _ + ")"
+        } getOrElse ""
+      }
+
+      def jarOptions(option: String, jars: Seq[Filtered]): Seq[String] = {
+        jars map { jar => "%s \"%s\"%s" format(option, jar.file.getCanonicalPath, filterString(jar.filter)) }
+      }
+
+      def keepMain(name: String): String = {
+        """-keep public class %s {
+          |    public static void main(java.lang.String[]);
+          |}""".stripMargin.format(name)
+      }
+    }
+
+    object ProguardMerge {
+
+      import Merge.Strategy.{matchingRegex, matchingString}
+
+      import scala.util.matching.Regex
+
+      def defaultStrategies = Seq(
+        discard("META-INF/MANIFEST.MF")
+      )
+
+      def discard(exactly: String) = matchingString(exactly, Merge.discard)
+      def first(exactly: String) = matchingString(exactly, Merge.first)
+      def last(exactly: String) = matchingString(exactly, Merge.last)
+      def rename(exactly: String) = matchingString(exactly, Merge.rename)
+      def append(exactly: String) = matchingString(exactly, Merge.append)
+
+      def discard(pattern: Regex) = matchingRegex(pattern, Merge.discard)
+      def first(pattern: Regex) = matchingRegex(pattern, Merge.first)
+      def last(pattern: Regex) = matchingRegex(pattern, Merge.last)
+      def rename(pattern: Regex) = matchingRegex(pattern, Merge.rename)
+      def append(pattern: Regex) = matchingRegex(pattern, Merge.append)
+    }
+
   }
 
   override lazy val projectSettings: Seq[Setting[_]] =
-    inConfig(Proguard)(ProguardSettings.default) ++ ProguardSettings.dependencies
+    inConfig(autoImport.Proguard)(ProguardSettings.default) ++ ProguardSettings.dependencies
 
   object ProguardSettings {
 
@@ -52,7 +109,10 @@ object SbtProguard extends AutoPlugin {
       proguardConfiguration := proguardDirectory.value / "configuration.pro",
       artifactPath := proguardDirectory.value / (artifactPath in packageBin in Compile).value.getName,
       managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-      binaryDeps := (compile in Compile).value.asInstanceOf[Analysis].relations.allLibraryDeps.toSeq, // TODO: get relations safe
+      binaryDeps := ((compile in Compile).value match {
+        case analysis: Analysis =>
+          analysis.relations.allLibraryDeps.toSeq
+      }),
       inputs := (fullClasspath in Runtime).value.files,
       libraries := binaryDeps.value filterNot inputs.value.toSet,
       outputs := Seq(artifactPath.value),
@@ -139,62 +199,6 @@ object SbtProguard extends AutoPlugin {
       val exitCode = Process("java", options) ! log
       if (exitCode != 0) sys.error("Proguard failed with exit code [%s]" format exitCode)
     }
-  }
-
-  object ProguardOptions {
-
-    case class Filtered(file: File, filter: Option[String])
-
-    def noFilter(jar: File): Seq[Filtered] = Seq(Filtered(jar, None))
-
-    def noFilter(jars: Seq[File]): Seq[Filtered] = filtered(jars, None)
-
-    def filtered(jars: Seq[File], filter: File => Option[String]): Seq[Filtered] = {
-      jars map { jar => Filtered(jar, filter(jar)) }
-    }
-
-    def filtered(jars: Seq[File], filter: Option[String]): Seq[Filtered] = {
-      jars map { jar => Filtered(jar, filter) }
-    }
-
-    def filterString(filter: Option[String]): String = {
-      filter map {
-        "(" + _ + ")"
-      } getOrElse ""
-    }
-
-    def jarOptions(option: String, jars: Seq[Filtered]): Seq[String] = {
-      jars map { jar => "%s \"%s\"%s" format(option, jar.file.getCanonicalPath, filterString(jar.filter)) }
-    }
-
-    def keepMain(name: String): String = {
-      """-keep public class %s {
-        |    public static void main(java.lang.String[]);
-        |}""".stripMargin.format(name)
-    }
-  }
-
-  object ProguardMerge {
-
-    import Merge.Strategy.{matchingRegex, matchingString}
-
-    import scala.util.matching.Regex
-
-    def defaultStrategies = Seq(
-      discard("META-INF/MANIFEST.MF")
-    )
-
-    def discard(exactly: String) = matchingString(exactly, Merge.discard)
-    def first(exactly: String) = matchingString(exactly, Merge.first)
-    def last(exactly: String) = matchingString(exactly, Merge.last)
-    def rename(exactly: String) = matchingString(exactly, Merge.rename)
-    def append(exactly: String) = matchingString(exactly, Merge.append)
-
-    def discard(pattern: Regex) = matchingRegex(pattern, Merge.discard)
-    def first(pattern: Regex) = matchingRegex(pattern, Merge.first)
-    def last(pattern: Regex) = matchingRegex(pattern, Merge.last)
-    def rename(pattern: Regex) = matchingRegex(pattern, Merge.rename)
-    def append(pattern: Regex) = matchingRegex(pattern, Merge.append)
   }
 
 }
