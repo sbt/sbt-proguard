@@ -11,9 +11,9 @@ object Sbt10Compat {
 
   implicit def toProcessLogger(logger: Logger): scala.sys.process.ProcessLogger =
     new scala.sys.process.ProcessLogger {
-      override def out(s: => String): Unit = logger.info(s)
-      override def err(s: => String): Unit = logger.error(s)
-      override def buffer[T](f: => T): T = logger.buffer(f)
+      override def out(s: => String): Unit = (logger: sbt.ProcessLogger).info(s)
+      override def err(s: => String): Unit = (logger: sbt.ProcessLogger).error(s)
+      override def buffer[T](f: => T): T = (logger: sbt.ProcessLogger).buffer(f)
     }
 
   val getAllBinaryDeps: Def.Initialize[Task[Seq[java.io.File]]] = Def.task {
