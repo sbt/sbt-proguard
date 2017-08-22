@@ -1,9 +1,9 @@
 package com.typesafe.sbt
 
-import com.typesafe.sbt.proguard.Merge
+import com.typesafe.sbt.proguard.{Merge, Sbt10Compat}
 import sbt.Keys._
-import sbt.internal.inc.Analysis
 import sbt.{Def, _}
+import Sbt10Compat._
 
 import scala.sys.process.Process
 
@@ -38,7 +38,6 @@ object SbtProguard extends AutoPlugin {
     val proguard = TaskKey[Seq[File]]("proguard")
 
     object ProguardOptions {
-
       case class Filtered(file: File, filter: Option[String])
 
       def noFilter(jar: File): Seq[Filtered] = Seq(Filtered(jar, None))
@@ -109,10 +108,7 @@ object SbtProguard extends AutoPlugin {
       proguardConfiguration := proguardDirectory.value / "configuration.pro",
       artifactPath := proguardDirectory.value / (artifactPath in packageBin in Compile).value.getName,
       managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-      binaryDeps := ((compile in Compile).value match {
-        case analysis: Analysis =>
-          analysis.relations.allLibraryDeps.toSeq
-      }),
+      binaryDeps := getAllBinaryDeps.value,
       inputs := (fullClasspath in Runtime).value.files,
       libraries := binaryDeps.value filterNot inputs.value.toSet,
       outputs := Seq(artifactPath.value),

@@ -1,15 +1,15 @@
 package com.typesafe.sbt.proguard
 
-import sbt._
-import sbt.io.Path._
 import java.io.File
 import java.util.regex.Pattern
 
-import sbt.internal.inc.classpath.ClasspathUtilities
-
+import com.typesafe.sbt.proguard.Sbt10Compat._
+import sbt._
 import scala.util.matching.Regex
+import Sbt10Compat.SbtIoPath._
 
 object Merge {
+
   object EntryPath {
     val pattern = Pattern.compile(if (File.separator == "\\") "\\\\" else File.separator)
 
@@ -77,7 +77,9 @@ object Merge {
       var failed = false
       val groupedEntries = entries(sources, tmp) groupBy (_.path)
       for ((path, entries) <- groupedEntries) {
-        val strategy = strategies find { _.claims(path) } getOrElse Strategy.deduplicate
+        val strategy = strategies find {
+          _.claims(path)
+        } getOrElse Strategy.deduplicate
         try {
           strategy.merge(path, entries, target, log)
         } catch {
@@ -99,8 +101,10 @@ object Merge {
         log.debug("Ignoring duplicate directories at '%s'" format path)
         path.file(target).mkdirs
       } else {
-        entries foreach { e => log.debug("Matching entry at '%s' from %s" format (e.path, e.source.name)) }
-        val hashes = (entries map { _.file.hashString }).toSet
+        entries foreach { e => log.debug("Matching entry at '%s' from %s" format(e.path, e.source.name)) }
+        val hashes = (entries map {
+          _.file.hashString
+        }).toSet
         if (hashes.size <= 1) {
           log.debug("Identical duplicates found at '%s'" format path)
           copyFirst(entries, target, Some(log))
@@ -123,12 +127,12 @@ object Merge {
   }
 
   def copyOne(label: String, target: File, log: Option[Logger] = None)(entry: Entry): Unit = {
-    log foreach { l => l.debug("Keeping %s entry at '%s' from %s" format (label, entry.path, entry.source.name)) }
+    log foreach { l => l.debug("Keeping %s entry at '%s' from %s" format(label, entry.path, entry.source.name)) }
     IO.copyFile(entry.file, entry.path.file(target))
   }
 
   def discard(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
-    entries foreach { e => log.debug("Discarding entry at '%s' from %s" format (e.path, e.source.name)) }
+    entries foreach { e => log.debug("Discarding entry at '%s' from %s" format(e.path, e.source.name)) }
   }
 
   def first(path: EntryPath, entries: Seq[Entry], target: File, log: Logger): Unit = {
@@ -146,7 +150,7 @@ object Merge {
     for (entry <- entries) {
       val file = path.file(target)
       val renamed = new File(file.getParentFile, file.name + "-" + entry.source.name)
-      log.debug("Renaming entry at '%s' to '%s'" format (path, renamed.name))
+      log.debug("Renaming entry at '%s' to '%s'" format(path, renamed.name))
       IO.copyFile(entry.file, renamed)
     }
   }
@@ -155,7 +159,7 @@ object Merge {
     if (path.isDirectory) sys.error("Append of directory entry at '%s' is not supported" format path)
     for (entry <- entries) {
       val file = path.file(target)
-      log.debug("Appending entry at '%s' from '%s'" format (path, entry.source.name))
+      log.debug("Appending entry at '%s' from '%s'" format(path, entry.source.name))
       IO.append(file, IO.readBytes(entry.file))
     }
   }
