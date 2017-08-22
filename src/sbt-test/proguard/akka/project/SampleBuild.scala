@@ -1,17 +1,17 @@
 import sbt._
 import sbt.Keys._
-import com.typesafe.sbt.SbtProguard._
+import com.typesafe.sbt.SbtProguard.autoImport._
+import com.typesafe.sbt.SbtProguard
 
 object SampleBuild extends Build {
-  import ProguardKeys.{ mergeStrategies, merge, options }
   import ProguardOptions.keepMain
   import ProguardMerge.append
 
   lazy val proguardAkka = Project(
     id = "proguard-akka",
     base = file("."),
-    settings = Defaults.defaultSettings ++ Seq(
-      scalaVersion := "2.10.1",
+    settings = Defaults.defaultSettings ++ SbtProguard.projectSettings ++ Seq(
+      scalaVersion := "2.10.6",
       libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.1.2",
       merge in Proguard := true,
       mergeStrategies in Proguard += append("reference.conf"),

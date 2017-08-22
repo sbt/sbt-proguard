@@ -1,1 +1,1 @@
-addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.5")
+addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % sys.props("project.version"))

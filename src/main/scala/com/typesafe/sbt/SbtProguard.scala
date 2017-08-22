@@ -108,6 +108,8 @@ object SbtProguard extends AutoPlugin {
     }
 
     def runProguard(config: File, javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
+      System.out.println(config.getAbsolutePath)
+      System.err.println(config.getAbsolutePath)
       val options = javaOptions ++ Seq("-cp", Path.makeString(classpath), "proguard.ProGuard", "-include", config.getAbsolutePath)
       log.debug("Proguard command:")
       log.debug("java " + options.mkString(" "))
