@@ -10,7 +10,8 @@ publishMavenStyle := false
 bintrayOrganization := Some("sbt")
 bintrayRepository := "sbt-plugin-releases"
 bintrayPackage := name.value
-bintrayReleaseOnPublish in ThisBuild := false
+bintrayReleaseOnPublish in ThisBuild := false //sbt1.0
+bintrayReleaseOnPublish := false
 
 crossSbtVersions := Seq("0.13.16", "1.0.0")
 
