@@ -3,7 +3,7 @@ sbtPlugin := true
 
 organization := "com.typesafe.sbt"
 name := "sbt-proguard"
-version := "0.2.5"
+version := "0.2.4-SNAPSHOT"
 
 publishMavenStyle := false
 
