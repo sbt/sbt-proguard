@@ -1,9 +1,9 @@
-proguardSettings
+enablePlugins(SbtProguard)
 
-ProguardKeys.options in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
+options in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
 
-ProguardKeys.options in Proguard += ProguardOptions.keepMain("Test")
+options in Proguard += ProguardOptions.keepMain("Test")
 
-ProguardKeys.merge in Proguard := true
+merge in Proguard := true
 
-ProguardKeys.mergeStrategies in Proguard += ProguardMerge.discard("META-INF/.*".r)
+mergeStrategies in Proguard += ProguardMerge.discard("META-INF/.*".r)

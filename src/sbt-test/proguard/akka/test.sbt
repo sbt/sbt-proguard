@@ -7,5 +7,6 @@ TaskKey[Unit]("check") := {
   a.run()
   Thread.sleep(1000)
   val output = b.!!
+    .replaceAllLiterally("\r\n", "\n")
   if (output != expected) sys.error("Unexpected output:\n" + output)
 }

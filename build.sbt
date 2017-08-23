@@ -16,4 +16,4 @@ crossSbtVersions := Seq("0.13.16", "1.0.0")
 
 ScriptedPlugin.scriptedSettings
 scriptedLaunchOpts := Seq("-Xms512m", "-Xmx512m", "-XX:MaxPermSize=256m", s"-Dproject.version=${version.value}")
-scriptedBufferLog := false
+//scriptedBufferLog := false

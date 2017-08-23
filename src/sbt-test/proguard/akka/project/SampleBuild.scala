@@ -10,14 +10,16 @@ object SampleBuild extends Build {
   lazy val proguardAkka = Project(
     id = "proguard-akka",
     base = file("."),
+    configurations = SbtProguard.projectConfigurations,
     settings = Defaults.defaultSettings ++ SbtProguard.projectSettings ++ Seq(
       scalaVersion := "2.10.6",
-      libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.1.2",
+      libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.1.2",//"2.3.9",
       merge in Proguard := true,
       mergeStrategies in Proguard += append("reference.conf"),
       options in Proguard += keepMain("A"),
       options in Proguard += keepMain("B"),
       options in Proguard += "-dontoptimize", // reduce time for proguard
+      options in Proguard += "-dontobfuscate",
       options in Proguard += ProguardConf.akka
     )
   )
