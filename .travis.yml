@@ -1,5 +1,5 @@
 language: scala
 
-env: JDK=oraclejdk8
+jdk: oraclejdk8
 
 script: sbt "^ publish-local" "^ scripted"
