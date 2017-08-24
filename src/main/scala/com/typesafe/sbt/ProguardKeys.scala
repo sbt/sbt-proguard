@@ -3,29 +3,29 @@ package com.typesafe.sbt
 import com.typesafe.sbt.SbtProguard.autoImport.ProguardOptions.Filtered
 import com.typesafe.sbt.proguard.Merge
 import com.typesafe.sbt.proguard.Merge.Strategy
-import sbt.{File, SettingKey, TaskKey}
+import sbt.{File, SettingKey, _}
 
 trait ProguardKeys {
-  val proguardVersion = SettingKey[String]("proguard-version")
-  val proguardDirectory = SettingKey[File]("proguard-directory")
-  val proguardConfiguration = SettingKey[File]("proguard-configuration")
-  val binaryDeps = TaskKey[Seq[File]]("binaryDeps")
-  val inputs = TaskKey[Seq[File]]("inputs")
-  val libraries = TaskKey[Seq[File]]("libraries")
-  val outputs = TaskKey[Seq[File]]("outputs")
-  val defaultInputFilter = TaskKey[Option[String]]("default-input-filter")
-  val inputFilter = TaskKey[File => Option[String]]("input-filter")
-  val libraryFilter = TaskKey[File => Option[String]]("library-filter")
-  val outputFilter = TaskKey[File => Option[String]]("output-filter")
-  val filteredInputs = TaskKey[Seq[Filtered]]("filtered-inputs")
-  val filteredLibraries = TaskKey[Seq[Filtered]]("filtered-libraries")
-  val filteredOutputs = TaskKey[Seq[Filtered]]("filtered-outputs")
-  val merge = TaskKey[Boolean]("merge")
-  val mergeDirectory = SettingKey[File]("merge-directory")
-  val mergeStrategies = TaskKey[Seq[Strategy]]("merge-strategies")
-  val mergedInputs = TaskKey[Seq[Filtered]]("merged-inputs")
-  val options = TaskKey[Seq[String]]("options")
-  val proguard = TaskKey[Seq[File]]("proguard")
+  val proguardVersion = settingKey[String]("proguard version")
+  val proguardDirectory = settingKey[File]("proguard directory")
+  val proguardConfiguration = settingKey[File]("proguard configuration")
+  val proguardBinaryDeps = taskKey[Seq[File]]("proguard binary dependencies")
+  val proguardInputs = taskKey[Seq[File]]("proguard inputs")
+  val proguardLibraries = taskKey[Seq[File]]("proguard libraries")
+  val proguardOutputs = taskKey[Seq[File]]("proguard outputs")
+  val proguardDefaultInputFilter = taskKey[Option[String]]("proguard default input filter")
+  val proguardInputFilter = taskKey[File => Option[String]]("proguard input filter")
+  val proguardLibraryFilter = taskKey[File => Option[String]]("proguard library filter")
+  val proguardOutputFilter = taskKey[File => Option[String]]("proguard output filter")
+  val proguardFilteredInputs = taskKey[Seq[Filtered]]("proguard filtered inputs")
+  val proguardFilteredLibraries = taskKey[Seq[Filtered]]("proguard filtered libraries")
+  val proguardFilteredOutputs = taskKey[Seq[Filtered]]("proguard filtered outputs")
+  val proguardMerge = taskKey[Boolean]("proguard merge")
+  val proguardMergeDirectory = settingKey[File]("proguard merge directory")
+  val proguardMergeStrategies = taskKey[Seq[Strategy]]("proguard merge strategies")
+  val proguardMergedInputs = taskKey[Seq[Filtered]]("proguard merged inputs")
+  val proguardOptions = taskKey[Seq[String]]("proguard options")
+  val proguard = taskKey[Seq[File]]("proguard")
 
   object ProguardOptions {
 

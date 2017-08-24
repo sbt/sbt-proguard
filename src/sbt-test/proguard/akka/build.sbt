@@ -1,33 +1,18 @@
-import sbt._
-import sbt.Keys._
-import com.typesafe.sbt.SbtProguard.autoImport._
-import com.typesafe.sbt.SbtProguard
+enablePlugins(SbtProguard)
 
-object SampleBuild extends Build {
-  import ProguardOptions.keepMain
-  import ProguardMerge.append
+scalaVersion := "2.10.6"
 
-  lazy val proguardAkka = Project(
-    id = "proguard-akka",
-    base = file("."),
-    configurations = SbtProguard.projectConfigurations,
-    settings = Defaults.defaultSettings ++ SbtProguard.projectSettings ++ Seq(
-      scalaVersion := "2.10.6",
-      libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.1.2",//"2.3.9",
-      merge in Proguard := true,
-      mergeStrategies in Proguard += append("reference.conf"),
-      options in Proguard += keepMain("A"),
-      options in Proguard += keepMain("B"),
-      options in Proguard += "-dontoptimize", // reduce time for proguard
-      options in Proguard += "-dontobfuscate",
-      options in Proguard += ProguardConf.akka
-    )
-  )
-}
+libraryDependencies += "com.typesafe.akka" %% "akka-remote" % "2.1.2"
 
-object ProguardConf {
+proguardMerge in Proguard := true
+proguardMergeStrategies in Proguard += ProguardMerge.append("reference.conf")
+proguardOptions in Proguard += ProguardOptions.keepMain("A")
+proguardOptions in Proguard += ProguardOptions.keepMain("B")
+proguardOptions in Proguard += "-dontoptimize" // reduce time for proguard
+proguardOptions in Proguard += "-dontobfuscate"
+proguardOptions in Proguard += akka
 
-  val akka =
+lazy val akka =
 """
 
 #
@@ -150,4 +135,3 @@ object ProguardConf {
 -dontwarn org.uncommons.maths.random.AESCounterRNG
 
 """
-}

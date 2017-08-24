@@ -1,3 +1,5 @@
+import scala.sys.process.Process
+
 // for sbt scripted test:
 TaskKey[Unit]("check") := {
   val cp = (proguard in Proguard).value

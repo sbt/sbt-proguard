@@ -11,12 +11,12 @@ object SbtProguard extends AutoPlugin {
 
   object autoImport extends ProguardKeys {
     lazy val Proguard: Configuration = config("proguard").hide
-
-    //lazy val ProguardKeys = autoImport // for backwards compatibility
   }
 
   import autoImport._
   import ProguardOptions._
+
+  override def requires: Plugins = plugins.JvmPlugin
 
   override def projectConfigurations: Seq[Configuration] = Seq(Proguard)
 
@@ -28,28 +28,28 @@ object SbtProguard extends AutoPlugin {
     proguardConfiguration := proguardDirectory.value / "configuration.pro",
     artifactPath := proguardDirectory.value / (artifactPath in packageBin in Compile).value.getName,
     managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-    binaryDeps := getAllBinaryDeps.value,
-    inputs := (fullClasspath in Runtime).value.files,
-    libraries := binaryDeps.value filterNot inputs.value.toSet,
-    outputs := Seq(artifactPath.value),
-    defaultInputFilter := Some("!META-INF/MANIFEST.MF"),
-    inputFilter := {
-      val defaultInputFilterValue = defaultInputFilter.value
+    proguardBinaryDeps := getAllBinaryDeps.value,
+    proguardInputs := (fullClasspath in Runtime).value.files,
+    proguardLibraries := proguardBinaryDeps.value filterNot proguardInputs.value.toSet,
+    proguardOutputs := Seq(artifactPath.value),
+    proguardDefaultInputFilter := Some("!META-INF/MANIFEST.MF"),
+    proguardInputFilter := {
+      val defaultInputFilterValue = proguardDefaultInputFilter.value
       _ => defaultInputFilterValue
     },
-    libraryFilter := { f => None },
-    outputFilter := { f => None },
-    filteredInputs := filtered(inputs.value, inputFilter.value),
-    filteredLibraries := filtered(libraries.value, libraryFilter.value),
-    filteredOutputs := filtered(outputs.value, outputFilter.value),
-    merge := false,
-    mergeDirectory := proguardDirectory.value / "merged",
-    mergeStrategies := ProguardMerge.defaultStrategies,
-    mergedInputs := mergeTask.value,
-    options := {
-      jarOptions("-injars", mergedInputs.value) ++
-        jarOptions("-libraryjars", filteredLibraries.value) ++
-        jarOptions("-outjars", filteredOutputs.value)
+    proguardLibraryFilter := { f => None },
+    proguardOutputFilter := { f => None },
+    proguardFilteredInputs := filtered(proguardInputs.value, proguardInputFilter.value),
+    proguardFilteredLibraries := filtered(proguardLibraries.value, proguardLibraryFilter.value),
+    proguardFilteredOutputs := filtered(proguardOutputs.value, proguardOutputFilter.value),
+    proguardMerge := false,
+    proguardMergeDirectory := proguardDirectory.value / "merged",
+    proguardMergeStrategies := ProguardMerge.defaultStrategies,
+    proguardMergedInputs := mergeTask.value,
+    proguardOptions := {
+      jarOptions("-injars", proguardMergedInputs.value) ++
+        jarOptions("-libraryjars", proguardFilteredLibraries.value) ++
+        jarOptions("-outjars", proguardFilteredOutputs.value)
     },
     javaOptions in proguard := Seq("-Xmx256M"),
     autoImport.proguard := proguardTask.value
@@ -61,10 +61,10 @@ object SbtProguard extends AutoPlugin {
 
   lazy val mergeTask: Def.Initialize[Task[Seq[ProguardOptions.Filtered]]] = Def.task {
     val streamsValue = streams.value
-    val mergeDirectoryValue = mergeDirectory.value
-    val mergeStrategiesValue = mergeStrategies.value
-    val filteredInputsValue = filteredInputs.value
-    if (merge.value) {
+    val mergeDirectoryValue = proguardMergeDirectory.value
+    val mergeStrategiesValue = proguardMergeStrategies.value
+    val filteredInputsValue = proguardFilteredInputs.value
+    if (proguardMerge.value) {
       val cachedMerge = FileFunction.cached(streamsValue.cacheDirectory / "proguard-merge", FilesInfo.hash) { _ =>
         streamsValue.log.info("Merging inputs before proguard...")
         IO.delete(mergeDirectoryValue)
@@ -81,22 +81,22 @@ object SbtProguard extends AutoPlugin {
   }
 
   lazy val proguardTask: Def.Initialize[Task[Seq[File]]] = Def.task {
-    writeConfiguration(proguardConfiguration.value, options.value)
+    writeConfiguration(proguardConfiguration.value, proguardOptions.value)
     val proguardConfigurationValue = proguardConfiguration.value
     val javaOptionsInProguardValue = (javaOptions in proguard).value
     val managedClasspathValue = managedClasspath.value
     val streamsValue = streams.value
-    val outputsValue = outputs.value
+    val outputsValue = proguardOutputs.value
     val cachedProguard = FileFunction.cached(streams.value.cacheDirectory / "proguard", FilesInfo.hash) { _ =>
       outputsValue foreach IO.delete
       streamsValue.log.debug("Proguard configuration:")
-      options.value foreach (streamsValue.log.debug(_))
+      proguardOptions.value foreach (streamsValue.log.debug(_))
       runProguard(proguardConfigurationValue, javaOptionsInProguardValue, managedClasspathValue.files, streamsValue.log)
       outputsValue.toSet
     }
-    val inputs = (proguardConfiguration.value +: inputFiles(filteredInputs.value)).toSet
+    val inputs = (proguardConfiguration.value +: inputFiles(proguardFilteredInputs.value)).toSet
     cachedProguard(inputs)
-    outputs.value
+    proguardOutputs.value
   }
 
   def inputFiles(inputs: Seq[Filtered]): Seq[File] =
