@@ -1,8 +1,8 @@
-package com.typesafe.sbt
+package com.lightbend.sbt
 
-import com.typesafe.sbt.SbtProguard.autoImport.ProguardOptions.Filtered
-import com.typesafe.sbt.proguard.Merge
-import com.typesafe.sbt.proguard.Merge.Strategy
+import com.lightbend.sbt.SbtProguard.autoImport.ProguardOptions.Filtered
+import com.lightbend.sbt.proguard.Merge
+import com.lightbend.sbt.proguard.Merge.Strategy
 import sbt.{File, SettingKey, _}
 
 trait ProguardKeys {

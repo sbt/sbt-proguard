@@ -1,1 +1,1 @@
-addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % sys.props("project.version"))
+addSbtPlugin("com.lightbend.sbt" % "sbt-proguard" % sys.props("project.version"))
