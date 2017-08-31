@@ -1,7 +1,7 @@
 sbt-proguard
 ============
 
-[sbt] plugin for running [ProGuard]. This plugin requires sbt 0.12 or 0.13.
+[sbt] plugin for running [ProGuard]. This plugin requires sbt 0.13 or 1.0.
 
 [![Build Status](https://travis-ci.org/sbt/sbt-proguard.png?branch=master)](https://travis-ci.org/sbt/sbt-proguard)
 
@@ -22,11 +22,11 @@ Example
 A simple `build.sbt` with settings to configure sbt-proguard:
 
 ```scala
-proguardSettings
+enablePlugins(SbtProguard)
 
-ProguardKeys.options in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
+proguardOptions in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
 
-ProguardKeys.options in Proguard += ProguardOptions.keepMain("some.MainClass")
+proguardOptions in Proguard += ProguardOptions.keepMain("some.MainClass")
 ```
 
 Run proguard at the sbt shell with:
@@ -46,7 +46,7 @@ files.
 For example, to add a `!META-INF/**` filter to just the scala-library jar:
 
 ```scala
-ProguardKeys.inputFilter in Proguard := { file =>
+proguardInputFilter in Proguard := { file =>
   file.name match {
     case "scala-library.jar" => Some("!META-INF/**")
     case _                   => None
@@ -60,11 +60,11 @@ which will create the following proguard configuration:
 -injars "/path/to/scala-library.jar"(!META-INF/**)
 ```
 
-There are corresponding settings for libraries and outputs: `libraryFilter` and
-`outputFilter`.
+There are corresponding settings for libraries and outputs: `proguardLibraryFilter` and
+`proguardOutputFilter`.
 
-For more advanced usage the `filteredInputs`, `filteredLibraries`, and
-`filteredOutputs` settings can be set directly.
+For more advanced usage the `proguardFilteredInputs`, `proguardFilteredLibraries`, and
+`proguardFilteredOutputs` settings can be set directly.
 
 
 Merging
@@ -79,7 +79,7 @@ The sbt-proguard plugin supports pre-merging inputs, similar to creating an
 assembly jar first. To enable this merging use:
 
 ```scala
-ProguardKeys.merge in Proguard := true
+proguardMerge in Proguard := true
 ```
 
 Conflicting paths that are not identical will now fail at the merge stage. These
@@ -102,25 +102,25 @@ The default strategy is to only discard `META-INF/MANIFEST.MF`. This same
 strategy could be added with:
 
 ```scala
-ProguardKeys.mergeStrategies in Proguard += ProguardMerge.discard("META-INF/MANIFEST.MF")
+proguardMergeStrategies in Proguard += ProguardMerge.discard("META-INF/MANIFEST.MF")
 ```
 
 Or all `META-INF` contents could be discarded with a regular expression:
 
 ```scala
-ProguardKeys.mergeStrategies in Proguard += ProguardMerge.discard("META-INF/.*".r)
+proguardMergeStrategies in Proguard += ProguardMerge.discard("META-INF/.*".r)
 ```
 
 To concatenate all `reference.conf` files together use:
 
 ```scala
-ProguardKeys.mergeStrategies in Proguard += ProguardMerge.append("reference.conf")
+proguardMergeStrategies in Proguard += ProguardMerge.append("reference.conf")
 ```
 
 To discard all `.html` and `.txt` files you may use two strategies together:
 
 ```scala
-ProguardKeys.mergeStrategies in Proguard ++= Seq(
+proguardMergeStrategies in Proguard ++= Seq(
   ProguardMerge.discard("\\.html$".r),
   ProguardMerge.discard("\\.txt$".r) 
 )

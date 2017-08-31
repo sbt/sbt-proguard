@@ -1,6 +1,9 @@
+import scala.sys.process.Process
+
 // for sbt scripted test:
-TaskKey[Unit]("check") <<= (ProguardKeys.proguard in Proguard) map { jar =>
+TaskKey[Unit]("check") := {
   val expected = "test\n"
-  val output = Process("java", Seq("-jar", jar.absString)).!!
+  val output = Process("java", Seq("-jar", (proguard in Proguard).value.absString)).!!
+    .replaceAllLiterally("\r\n", "\n")
   if (output != expected) sys.error("Unexpected output:\n" + output)
 }

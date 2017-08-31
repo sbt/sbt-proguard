@@ -10,10 +10,10 @@ publishMavenStyle := false
 bintrayOrganization := Some("sbt")
 bintrayRepository := "sbt-plugin-releases"
 bintrayPackage := name.value
-bintrayReleaseOnPublish := false
+bintrayReleaseOnPublish in ThisBuild := false
 
-crossBuildingSettings
-CrossBuilding.crossSbtVersions := Seq("0.12", "0.13")
-CrossBuilding.scriptedSettings
+crossSbtVersions := Seq("0.13.16", "1.0.0")
 
+ScriptedPlugin.scriptedSettings
 scriptedLaunchOpts := Seq("-Xms512m", "-Xmx512m", "-XX:MaxPermSize=256m", s"-Dproject.version=${version.value}")
+//scriptedBufferLog := false

@@ -1,9 +1,11 @@
-proguardSettings
+enablePlugins(SbtProguard)
 
-ProguardKeys.options in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
+scalaVersion := "2.10.6"
 
-ProguardKeys.options in Proguard += ProguardOptions.keepMain("Test")
+proguardOptions in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
 
-ProguardKeys.inputs in Proguard <<= (dependencyClasspath in Compile) map { _.files }
+proguardOptions in Proguard += ProguardOptions.keepMain("Test")
 
-ProguardKeys.filteredInputs in Proguard <++= (packageBin in Compile) map ProguardOptions.noFilter
+proguardInputs in Proguard := (dependencyClasspath in Compile).value.files
+
+proguardFilteredInputs in Proguard ++= ProguardOptions.noFilter((packageBin in Compile).value)
