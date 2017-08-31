@@ -1,4 +1,4 @@
-package com.typesafe.sbt.proguard
+package com.lightbend.sbt.proguard
 
 import sbt.Keys.compile
 import sbt.{File, _}

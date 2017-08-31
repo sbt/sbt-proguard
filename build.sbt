@@ -1,7 +1,7 @@
 
 sbtPlugin := true
 
-organization := "com.typesafe.sbt"
+organization := "com.lightbend.sbt"
 name := "sbt-proguard"
 
 publishMavenStyle := false

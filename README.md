@@ -12,9 +12,12 @@ Add plugin
 Add plugin to `project/plugins.sbt`. For example:
 
 ```scala
-addSbtPlugin("com.typesafe.sbt" % "sbt-proguard" % "0.2.3")
+addSbtPlugin("com.lightbend.sbt" % "sbt-proguard" % "{version}")
 ```
 
+See [released versions][releases].
+
+Note: earlier versions of sbt-proguard used the `"com.lightbend.sbt"` organization.
 
 Example
 -------
@@ -141,7 +144,7 @@ Contribution policy
 
 Contributions via GitHub pull requests are gladly accepted from their original
 author. Before we can accept pull requests, you will need to agree to the
-[Typesafe Contributor License Agreement][cla] online, using your GitHub account.
+[Lightbend Contributor License Agreement][cla] online, using your GitHub account.
 
 
 License
@@ -155,9 +158,10 @@ The code for this sbt plugin is licensed under the [Apache 2.0 License][apache].
 
 [sbt]: https://github.com/sbt/sbt
 [ProGuard]: http://proguard.sourceforge.net/
+[releases]: https://github.com/sbt/sbt-proguard/releases
 [sbt-assembly]: https://github.com/sbt/sbt-assembly
-[samples]: https://github.com/sbt/sbt-proguard/tree/v0.2.3/src/sbt-test/proguard
-[cla]: http://www.typesafe.com/contribute/cla
+[samples]: https://github.com/sbt/sbt-proguard/tree/master/src/sbt-test/proguard
+[cla]: https://www.lightbend.com/contribute/cla
 [gpl]: http://www.gnu.org/licenses/gpl.html
 [except]: http://proguard.sourceforge.net/GPL_exception.html
 [apache]: http://www.apache.org/licenses/LICENSE-2.0.html
