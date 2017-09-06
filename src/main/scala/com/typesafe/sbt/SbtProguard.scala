@@ -23,7 +23,7 @@ object SbtProguard extends AutoPlugin {
   override lazy val projectSettings: Seq[Setting[_]] = inConfig(Proguard)(baseSettings) ++ dependencies
 
   def baseSettings: Seq[Setting[_]] = Seq(
-    proguardVersion := "5.0",
+    proguardVersion := "5.3.3",
     proguardDirectory := crossTarget.value / "proguard",
     proguardConfiguration := proguardDirectory.value / "configuration.pro",
     artifactPath := proguardDirectory.value / (artifactPath in packageBin in Compile).value.getName,

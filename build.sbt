@@ -11,11 +11,11 @@ bintrayRepository := "sbt-plugin-releases"
 bintrayPackage := name.value
 bintrayReleaseOnPublish := false
 
-crossSbtVersions := Seq("0.13.16", "1.0.0")
+crossSbtVersions := Seq("0.13.16", "1.0.1")
 
 scriptedSettings
 scriptedDependencies := publishLocal.value
-scriptedLaunchOpts ++= Seq("-Xms512m", "-Xmx512m", "-XX:MaxPermSize=256m", s"-Dproject.version=${version.value}")
+scriptedLaunchOpts ++= Seq("-Xms512m", "-Xmx512m", s"-Dproject.version=${version.value}")
 //scriptedBufferLog := false
 
 import ReleaseTransformations._
