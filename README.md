@@ -17,7 +17,7 @@ addSbtPlugin("com.lightbend.sbt" % "sbt-proguard" % "{version}")
 
 See [released versions][releases].
 
-Note: earlier versions of sbt-proguard used the `"com.lightbend.sbt"` organization.
+Note: earlier versions of sbt-proguard used the `"com.typesafe.sbt"` organization.
 
 Example
 -------
