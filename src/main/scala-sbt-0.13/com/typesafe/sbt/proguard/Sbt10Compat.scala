@@ -2,6 +2,7 @@ package com.lightbend.sbt.proguard
 
 import sbt.Keys.compile
 import sbt.{File, _}
+import scala.language.implicitConversions
 
 object Sbt10Compat {
 
