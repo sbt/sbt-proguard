@@ -1,6 +1,8 @@
 enablePlugins(SbtProguard)
 
-scalaVersion := "2.10.6"
+scalaVersion := "2.12.3"
+
+proguardOptions in Proguard += "-dontoptimize"
 
 proguardOptions in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
 

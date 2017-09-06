@@ -157,7 +157,7 @@ The code for this sbt plugin is licensed under the [Apache 2.0 License][apache].
 
 
 [sbt]: https://github.com/sbt/sbt
-[ProGuard]: http://proguard.sourceforge.net/
+[ProGuard]: https://www.guardsquare.com/en/proguard
 [releases]: https://github.com/sbt/sbt-proguard/releases
 [sbt-assembly]: https://github.com/sbt/sbt-assembly
 [samples]: https://github.com/sbt/sbt-proguard/tree/master/src/sbt-test/proguard
