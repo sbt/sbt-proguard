@@ -58,6 +58,12 @@ trait ProguardKeys {
         |    public static void main(java.lang.String[]);
         |}""".stripMargin.format(name)
     }
+
+    def keepMethods(className: String, returnType: String, inputType: String, methodName: String): String = {
+      s"""-keep public class $className {
+        |    public static $returnType $methodName ($inputType);
+        |}""".stripMargin
+    }
   }
 
   object ProguardMerge {
