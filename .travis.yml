@@ -1,3 +1,4 @@
 language: scala
+dist: xenial
 jdk: oraclejdk8
 script: sbt "^ scripted"
