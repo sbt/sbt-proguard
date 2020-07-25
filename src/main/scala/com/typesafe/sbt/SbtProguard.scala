@@ -23,7 +23,7 @@ object SbtProguard extends AutoPlugin {
   override lazy val projectSettings: Seq[Setting[_]] = inConfig(Proguard)(baseSettings) ++ dependencies
 
   def baseSettings: Seq[Setting[_]] = Seq(
-    proguardVersion := "6.2.2",
+    proguardVersion := "7.0.0",
     proguardDirectory := crossTarget.value / "proguard",
     proguardConfiguration := proguardDirectory.value / "configuration.pro",
     artifactPath := proguardDirectory.value / (artifactPath in packageBin in Compile).value.getName,
@@ -56,7 +56,8 @@ object SbtProguard extends AutoPlugin {
   )
 
   def dependencies: Seq[Setting[_]] = Seq(
-    libraryDependencies += "net.sf.proguard" % "proguard-base" % (proguardVersion in Proguard).value % Proguard
+    libraryDependencies += "com.guardsquare" % "proguard-base" % (proguardVersion in Proguard).value % Proguard,
+    resolvers += Resolver.bintrayRepo("guardsquare", "proguard")
   )
 
   lazy val mergeTask: Def.Initialize[Task[Seq[ProguardOptions.Filtered]]] = Def.task {
