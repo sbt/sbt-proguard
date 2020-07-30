@@ -38,6 +38,20 @@ Run proguard at the sbt shell with:
 proguard:proguard
 ```
 
+Specifying the proguard version
+-------
+In your `build.sbt`:
+```scala
+Proguard/proguardVersion := "6.2.2"
+```
+
+Or interactively in the sbt shell:
+```shell
+set myProject/Proguard/proguardVersion := "6.2.2"
+show myProject/Proguard/proguardVersion
+```
+
+Available proguard versions: https://github.com/Guardsquare/proguard/releases
 
 Filters
 -------
