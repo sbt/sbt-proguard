@@ -55,8 +55,16 @@ object SbtProguard extends AutoPlugin {
     autoImport.proguard := proguardTask.value
   )
 
+  private def groupId(proguardVersionStr: String): String =
+    "^(\\d+)\\.".r
+      .findFirstMatchIn(proguardVersionStr)
+      .map(_.group(1).toInt) match {
+      case Some(v) => if (v > 6) "com.guardsquare" else "net.sf.proguard"
+      case None => sys.error(s"Can't parse Proguard version: $proguardVersion")
+    }
+
   def dependencies: Seq[Setting[_]] = Seq(
-    libraryDependencies += "net.sf.proguard" % "proguard-base" % (proguardVersion in Proguard).value % Proguard
+    libraryDependencies += groupId((proguardVersion in Proguard).value) % "proguard-base" % (proguardVersion in Proguard).value % Proguard
   )
 
   lazy val mergeTask: Def.Initialize[Task[Seq[ProguardOptions.Filtered]]] = Def.task {
