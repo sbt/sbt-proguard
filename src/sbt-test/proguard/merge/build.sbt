@@ -2,12 +2,12 @@ enablePlugins(SbtProguard)
 
 scalaVersion := "2.12.3"
 
-proguardOptions in Proguard += "-dontoptimize"
+(Proguard / proguardOptions) += "-dontoptimize"
 
-proguardOptions in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
+(Proguard / proguardOptions) ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
 
-proguardOptions in Proguard += ProguardOptions.keepMain("Test")
+(Proguard / proguardOptions) += ProguardOptions.keepMain("Test")
 
-proguardMerge in Proguard := true
+(Proguard / proguardMerge) := true
 
-proguardMergeStrategies in Proguard += ProguardMerge.discard("META-INF/.*".r)
+(Proguard / proguardMergeStrategies) += ProguardMerge.discard("META-INF/.*".r)

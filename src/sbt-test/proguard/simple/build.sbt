@@ -2,12 +2,12 @@ enablePlugins(SbtProguard)
 
 scalaVersion := "2.12.3"
 
-proguardOptions in Proguard += "-dontoptimize"
+(Proguard / proguardOptions) += "-dontoptimize"
 
-proguardOptions in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
+(Proguard / proguardOptions) ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
 
-proguardOptions in Proguard += ProguardOptions.keepMain("Test")
+(Proguard / proguardOptions) += ProguardOptions.keepMain("Test")
 
-proguardInputs in Proguard := (dependencyClasspath in Compile).value.files
+(Proguard / proguardInputs) := (Compile / dependencyClasspath).value.files
 
-proguardFilteredInputs in Proguard ++= ProguardOptions.noFilter((packageBin in Compile).value)
+(Proguard / proguardFilteredInputs) ++= ProguardOptions.noFilter((Compile / packageBin).value)
