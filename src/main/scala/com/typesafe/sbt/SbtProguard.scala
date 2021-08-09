@@ -26,10 +26,10 @@ object SbtProguard extends AutoPlugin {
     proguardVersion := "7.0.0",
     proguardDirectory := crossTarget.value / "proguard",
     proguardConfiguration := proguardDirectory.value / "configuration.pro",
-    artifactPath := proguardDirectory.value / (artifactPath in packageBin in Compile).value.getName,
+    artifactPath := proguardDirectory.value / ( Compile / packageBin / artifactPath).value.getName,
     managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
     proguardBinaryDeps := getAllBinaryDeps.value,
-    proguardInputs := (fullClasspath in Runtime).value.files,
+    proguardInputs := (Runtime / fullClasspath).value.files,
     proguardLibraries := proguardBinaryDeps.value filterNot proguardInputs.value.toSet,
     proguardOutputs := Seq(artifactPath.value),
     proguardDefaultInputFilter := Some("!META-INF/MANIFEST.MF"),
@@ -37,8 +37,8 @@ object SbtProguard extends AutoPlugin {
       val defaultInputFilterValue = proguardDefaultInputFilter.value
       _ => defaultInputFilterValue
     },
-    proguardLibraryFilter := { f => None },
-    proguardOutputFilter := { f => None },
+    proguardLibraryFilter := { _ => None },
+    proguardOutputFilter := { _ => None },
     proguardFilteredInputs := filtered(proguardInputs.value, proguardInputFilter.value),
     proguardFilteredLibraries := filtered(proguardLibraries.value, proguardLibraryFilter.value),
     proguardFilteredOutputs := filtered(proguardOutputs.value, proguardOutputFilter.value),

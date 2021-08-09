@@ -4,7 +4,7 @@ scalaVersion := "2.12.3"
 
 (Proguard / proguardOptions) += "-dontoptimize"
 
-(Proguard / proguardOptions) ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
+(Proguard / proguardOptions) ++= Seq("-dontnote", "-verbose")
 
 (Proguard / proguardOptions) += ProguardOptions.keepMain("Test")
 
