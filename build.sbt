@@ -2,6 +2,9 @@
 sbtPlugin := true
 enablePlugins(SbtPlugin)
 
+addSbtPlugin("com.eed3si9n" % "sbt-assembly" % "1.0.0")
+enablePlugins(AssemblyPlugin)
+
 organization := "com.lightbend.sbt"
 name := "sbt-proguard"
 
