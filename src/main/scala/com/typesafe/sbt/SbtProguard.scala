@@ -1,11 +1,12 @@
 package com.lightbend.sbt
 
 import com.lightbend.sbt.proguard.Merge
-import com.lightbend.sbt.proguard.Sbt10Compat._
 import sbt.Keys._
 import sbt._
+import sbt.internal.inc.Analysis
 import sbtassembly.AssemblyKeys._
 import sbtassembly.AssemblyPlugin
+import xsbti.PathBasedFile
 
 import java.nio.file.FileSystems
 import scala.sys.process.Process
@@ -33,7 +34,14 @@ object SbtProguard extends AutoPlugin {
     proguardConfiguration := proguardDirectory.value / "configuration.pro",
     artifactPath := proguardDirectory.value / ( Compile / packageBin / artifactPath).value.getName,
     managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-    proguardBinaryDeps := getAllBinaryDeps.value,
+    proguardBinaryDeps := {
+      (Compile / libraryDependencies).value match {
+        case analysis: Analysis =>
+          analysis.relations.allLibraryDeps.collect { case vf: PathBasedFile =>
+            vf.toPath.toFile
+          }.toSeq
+      }
+    },
     proguardInputs := {
       assembly.value
       Seq((assembly / assemblyOutputPath).value)
