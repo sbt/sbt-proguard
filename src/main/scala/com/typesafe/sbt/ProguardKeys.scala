@@ -3,7 +3,7 @@ package com.lightbend.sbt
 import com.lightbend.sbt.SbtProguard.autoImport.ProguardOptions.Filtered
 import com.lightbend.sbt.proguard.Merge
 import com.lightbend.sbt.proguard.Merge.Strategy
-import sbt.{File, SettingKey, _}
+import sbt._
 
 trait ProguardKeys {
   val proguardVersion = settingKey[String]("proguard version")

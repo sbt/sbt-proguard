@@ -38,7 +38,7 @@ object Merge {
 
   def entries(sources: Seq[File], tmp: File): Seq[Entry] = {
     sources flatMap { source =>
-      val base = if (ClasspathUtilities.isArchive(source)) {
+      val base = if (ClasspathUtilities.isArchive(source.toPath)) {
         val path =
           if (source.getCanonicalPath.indexOf(":") > 0)
             source.getCanonicalPath.substring(source.getCanonicalPath.indexOf("\\") + 1,

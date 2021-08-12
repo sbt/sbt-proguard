@@ -3,7 +3,7 @@ package com.lightbend.sbt
 import com.lightbend.sbt.proguard.Merge
 import com.lightbend.sbt.proguard.Sbt10Compat._
 import sbt.Keys._
-import sbt.{Def, _}
+import sbt._
 import sbtassembly.AssemblyKeys._
 import sbtassembly.AssemblyPlugin
 
@@ -82,7 +82,8 @@ object SbtProguard extends AutoPlugin {
     val mergeDirectoryValue = proguardMergeDirectory.value
     val mergeStrategiesValue = proguardMergeStrategies.value
     val filteredInputsValue = proguardFilteredInputs.value
-    if (proguardMerge.value) {
+    if (!proguardMerge.value) filteredInputsValue
+    else {
       val cachedMerge = FileFunction.cached(streamsValue.cacheDirectory / "proguard-merge", FilesInfo.hash) { _ =>
         streamsValue.log.info("Merging inputs before proguard...")
         IO.delete(mergeDirectoryValue)
@@ -96,7 +97,7 @@ object SbtProguard extends AutoPlugin {
       val filters = (filteredInputsValue flatMap (_.filter)).toSet
       val combinedFilter = if (filters.nonEmpty) Some(filters.mkString(",")) else None
       Seq(Filtered(mergeDirectoryValue, combinedFilter))
-    } else filteredInputsValue
+    }
   }
 
   lazy val proguardTask: Def.Initialize[Task[Seq[File]]] = Def.task {
@@ -119,9 +120,6 @@ object SbtProguard extends AutoPlugin {
 
   def inputFiles(inputs: Seq[Filtered]): Seq[File] =
     inputs flatMap { i => if (i.file.isDirectory) i.file.allPaths.get else Seq(i.file) }
-
-  def writeConfiguration(config: File, options: Seq[String]): Unit =
-    IO.writeLines(config, options)
 
   def runProguard(proguardOptions: Seq[String], javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
     require(classpath.nonEmpty, "Proguard classpath cannot be empty!")

@@ -15,7 +15,7 @@ object Sbt10Compat {
     }
   }
 
-  val ClasspathUtilities = sbt.internal.inc.classpath.ClasspathUtilities
+  val ClasspathUtilities = sbt.internal.inc.classpath.ClasspathUtil
 
   val SbtIoPath = sbt.io.Path
 }
