@@ -4,8 +4,6 @@ import com.lightbend.sbt.proguard.Merge
 import sbt.Keys._
 import sbt._
 import sbt.internal.inc.Analysis
-import sbtassembly.AssemblyKeys._
-import sbtassembly.AssemblyPlugin
 import xsbti.PathBasedFile
 
 import java.nio.file.FileSystems
@@ -20,7 +18,7 @@ object SbtProguard extends AutoPlugin {
   import autoImport._
   import ProguardOptions._
 
-  override def requires: Plugins = plugins.JvmPlugin && AssemblyPlugin
+  override def requires: Plugins = plugins.JvmPlugin
 
   override def trigger = allRequirements
 
@@ -42,10 +40,7 @@ object SbtProguard extends AutoPlugin {
           }.toSeq
       }
     },
-    proguardInputs := {
-      assembly.value
-      Seq((assembly / assemblyOutputPath).value)
-    },
+    proguardInputs := (Runtime/fullClasspath).value.files,
     (proguard / javaHome) := Some(FileSystems.getDefault.getPath(sys.env("JAVA_HOME")).toFile),
     proguardLibraries := (Compile / dependencyClasspathAsJars).value.map(_.data) ++ (proguard / javaHome).value,
     proguardOutputs := Seq(artifactPath.value),
