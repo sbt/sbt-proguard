@@ -41,7 +41,7 @@ object SbtProguard extends AutoPlugin {
       }
     },
     proguardInputs := (Runtime/fullClasspath).value.files,
-    (proguard / javaHome) := Some(FileSystems.getDefault.getPath(sys.env("JAVA_HOME")).toFile),
+    (proguard / javaHome) := Some(FileSystems.getDefault.getPath(System.getProperty("java.home")).toFile),
     proguardLibraries := (Compile / dependencyClasspathAsJars).value.map(_.data) ++ (proguard / javaHome).value,
     proguardOutputs := Seq(artifactPath.value),
     proguardDefaultInputFilter := None,
