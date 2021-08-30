@@ -32,6 +32,7 @@ object SbtProguard extends AutoPlugin {
     proguardConfiguration := proguardDirectory.value / "configuration.pro",
     artifactPath := proguardDirectory.value / ( Compile / packageBin / artifactPath).value.getName,
     managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
+    // proguardBinaryDeps := (Compile/compile).value.relations.allBinaryDeps.toSeq,
     proguardBinaryDeps := {
       (Compile / libraryDependencies).value match {
         case analysis: Analysis =>
@@ -41,10 +42,13 @@ object SbtProguard extends AutoPlugin {
       }
     },
     proguardInputs := (Runtime/fullClasspath).value.files,
-    (proguard / javaHome) := Some(FileSystems.getDefault.getPath(System.getProperty("java.home")).toFile),
-    proguardLibraries := (Compile / dependencyClasspathAsJars).value.map(_.data) ++ (proguard / javaHome).value,
+    (proguard / javaHome) := Some(FileSystems.getDefault.getPath(System.getProperty("java.home")).toFile), 
+    proguardLibraries := {
+      val dependencyJars = (Compile / dependencyClasspathAsJars).value.map(_.data)
+      dependencyJars.filterNot(proguardInputs.value.toSet) ++ (proguard / javaHome).value
+    },
     proguardOutputs := Seq(artifactPath.value),
-    proguardDefaultInputFilter := None,
+    proguardDefaultInputFilter := Some("!META-INF/MANIFEST.MF"),
     proguardInputFilter := {
       val defaultInputFilterValue = proguardDefaultInputFilter.value
       _ => defaultInputFilterValue
