@@ -32,7 +32,6 @@ object SbtProguard extends AutoPlugin {
     proguardConfiguration := proguardDirectory.value / "configuration.pro",
     artifactPath := proguardDirectory.value / ( Compile / packageBin / artifactPath).value.getName,
     managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-    // proguardBinaryDeps := (Compile/compile).value.relations.allBinaryDeps.toSeq,
     proguardBinaryDeps := {
       (Compile / libraryDependencies).value match {
         case analysis: Analysis =>
