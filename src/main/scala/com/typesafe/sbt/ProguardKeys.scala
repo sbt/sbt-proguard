@@ -9,7 +9,6 @@ trait ProguardKeys {
   val proguardVersion = settingKey[String]("proguard version")
   val proguardDirectory = settingKey[File]("proguard directory")
   val proguardConfiguration = settingKey[File]("proguard configuration")
-  val proguardBinaryDeps = taskKey[Seq[File]]("proguard binary dependencies")
   val proguardInputs = taskKey[Seq[File]]("proguard inputs")
   val proguardLibraries = taskKey[Seq[File]]("proguard libraries")
   val proguardOutputs = taskKey[Seq[File]]("proguard outputs")

@@ -32,14 +32,6 @@ object SbtProguard extends AutoPlugin {
     proguardConfiguration := proguardDirectory.value / "configuration.pro",
     artifactPath := proguardDirectory.value / ( Compile / packageBin / artifactPath).value.getName,
     managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-    proguardBinaryDeps := {
-      (Compile / libraryDependencies).value match {
-        case analysis: Analysis =>
-          analysis.relations.allLibraryDeps.collect { case vf: PathBasedFile =>
-            vf.toPath.toFile
-          }.toSeq
-      }
-    },
     proguardInputs := (Runtime/fullClasspath).value.files,
     (proguard / javaHome) := Some(FileSystems.getDefault.getPath(System.getProperty("java.home")).toFile), 
     proguardLibraries := {
