@@ -107,8 +107,9 @@ object SbtProguard extends AutoPlugin {
   }
 
   lazy val proguardTask: Def.Initialize[Task[Seq[File]]] = Def.task {
+    writeConfiguration(proguardConfiguration.value, proguardOptions.value)
+    val proguardConfigurationValue = proguardConfiguration.value
     val javaOptionsInProguardValue = (proguard / javaOptions).value
-    val proguardOptionsValue = proguardOptions.value
     val managedClasspathValue = managedClasspath.value
     val streamsValue = streams.value
     val outputsValue = proguardOutputs.value
@@ -116,7 +117,7 @@ object SbtProguard extends AutoPlugin {
       outputsValue foreach IO.delete
       streamsValue.log.debug("Proguard configuration:")
       proguardOptions.value foreach (streamsValue.log.debug(_))
-      runProguard(proguardOptionsValue, javaOptionsInProguardValue, managedClasspathValue.files, streamsValue.log)
+      runProguard(proguardConfigurationValue, javaOptionsInProguardValue, managedClasspathValue.files, streamsValue.log)
       outputsValue.toSet
     }
     val inputs = (proguardConfiguration.value +: inputFiles(proguardFilteredInputs.value)).toSet
@@ -127,9 +128,12 @@ object SbtProguard extends AutoPlugin {
   def inputFiles(inputs: Seq[Filtered]): Seq[File] =
     inputs flatMap { i => if (i.file.isDirectory) i.file.allPaths.get else Seq(i.file) }
 
-  def runProguard(proguardOptions: Seq[String], javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
+  def writeConfiguration(config: File, options: Seq[String]): Unit =
+    IO.writeLines(config, options)
+
+  def runProguard(config: File, javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
     require(classpath.nonEmpty, "Proguard classpath cannot be empty!")
-    val options = javaOptions ++ Seq("-cp", Path.makeString(classpath), "proguard.ProGuard") ++ proguardOptions
+    val options = javaOptions ++ Seq("-cp", Path.makeString(classpath), "proguard.ProGuard", "-include", config.getAbsolutePath)
     log.info("Proguard command:")
     log.info("java " + options.mkString(" "))
     val exitCode = Process("java", options) ! log
