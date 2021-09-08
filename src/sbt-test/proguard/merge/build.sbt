@@ -2,7 +2,7 @@ import java.nio.file.FileSystems
 
 enablePlugins(SbtProguard)
 
-scalaVersion := "2.12.3"
+scalaVersion := "2.13.6"
 name := "merge"
 
 (Proguard / proguardMerge) := true

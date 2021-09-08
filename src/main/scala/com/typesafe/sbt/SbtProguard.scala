@@ -4,8 +4,6 @@ import com.lightbend.sbt.proguard.Merge
 import sbt.Keys._
 import sbt._
 import sbt.internal.inc.Analysis
-import sbtassembly.AssemblyKeys._
-import sbtassembly.AssemblyPlugin
 import xsbti.PathBasedFile
 
 import java.nio.file.FileSystems
@@ -20,7 +18,7 @@ object SbtProguard extends AutoPlugin {
   import autoImport._
   import ProguardOptions._
 
-  override def requires: Plugins = plugins.JvmPlugin && AssemblyPlugin
+  override def requires: Plugins = plugins.JvmPlugin
 
   override def trigger = allRequirements
 
@@ -42,14 +40,14 @@ object SbtProguard extends AutoPlugin {
           }.toSeq
       }
     },
-    proguardInputs := {
-      assembly.value
-      Seq((assembly / assemblyOutputPath).value)
+    proguardInputs := (Runtime/fullClasspath).value.files,
+    (proguard / javaHome) := Some(FileSystems.getDefault.getPath(System.getProperty("java.home")).toFile), 
+    proguardLibraries := {
+      val dependencyJars = (Compile / dependencyClasspathAsJars).value.map(_.data)
+      dependencyJars.filterNot(proguardInputs.value.toSet) ++ (proguard / javaHome).value
     },
-    (proguard / javaHome) := Some(FileSystems.getDefault.getPath(sys.env("JAVA_HOME")).toFile),
-    proguardLibraries := (Compile / dependencyClasspathAsJars).value.map(_.data) ++ (proguard / javaHome).value,
     proguardOutputs := Seq(artifactPath.value),
-    proguardDefaultInputFilter := None,
+    proguardDefaultInputFilter := Some("!META-INF/MANIFEST.MF"),
     proguardInputFilter := {
       val defaultInputFilterValue = proguardDefaultInputFilter.value
       _ => defaultInputFilterValue
@@ -109,8 +107,9 @@ object SbtProguard extends AutoPlugin {
   }
 
   lazy val proguardTask: Def.Initialize[Task[Seq[File]]] = Def.task {
+    writeConfiguration(proguardConfiguration.value, proguardOptions.value)
+    val proguardConfigurationValue = proguardConfiguration.value
     val javaOptionsInProguardValue = (proguard / javaOptions).value
-    val proguardOptionsValue = proguardOptions.value
     val managedClasspathValue = managedClasspath.value
     val streamsValue = streams.value
     val outputsValue = proguardOutputs.value
@@ -118,7 +117,7 @@ object SbtProguard extends AutoPlugin {
       outputsValue foreach IO.delete
       streamsValue.log.debug("Proguard configuration:")
       proguardOptions.value foreach (streamsValue.log.debug(_))
-      runProguard(proguardOptionsValue, javaOptionsInProguardValue, managedClasspathValue.files, streamsValue.log)
+      runProguard(proguardConfigurationValue, javaOptionsInProguardValue, managedClasspathValue.files, streamsValue.log)
       outputsValue.toSet
     }
     val inputs = (proguardConfiguration.value +: inputFiles(proguardFilteredInputs.value)).toSet
@@ -129,9 +128,12 @@ object SbtProguard extends AutoPlugin {
   def inputFiles(inputs: Seq[Filtered]): Seq[File] =
     inputs flatMap { i => if (i.file.isDirectory) i.file.allPaths.get else Seq(i.file) }
 
-  def runProguard(proguardOptions: Seq[String], javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
+  def writeConfiguration(config: File, options: Seq[String]): Unit =
+    IO.writeLines(config, options)
+
+  def runProguard(config: File, javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
     require(classpath.nonEmpty, "Proguard classpath cannot be empty!")
-    val options = javaOptions ++ Seq("-cp", Path.makeString(classpath), "proguard.ProGuard") ++ proguardOptions
+    val options = javaOptions ++ Seq("-cp", Path.makeString(classpath), "proguard.ProGuard", "-include", config.getAbsolutePath)
     log.info("Proguard command:")
     log.info("java " + options.mkString(" "))
     val exitCode = Process("java", options) ! log

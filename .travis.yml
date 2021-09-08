@@ -1,4 +1,4 @@
 language: scala
 dist: trusty
 jdk: oraclejdk8
-script: sbt "^ scripted"
+script: sbt scripted

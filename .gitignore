@@ -2,3 +2,4 @@ project/project/
 target/
 .idea/*
 .bsp/
+/src/sbt-test/proguard/*/project/build.properties
