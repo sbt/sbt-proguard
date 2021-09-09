@@ -9,8 +9,8 @@ name := "filter"
 (Proguard / proguardOptions) ++= Seq("-dontoptimize", "-dontnote", "-dontwarn", "-ignorewarnings")
 (Proguard / proguardOptions) += ProguardOptions.keepMain("Test")
 (Proguard / proguardInputFilter) := { file =>
-  file.name match {
-    case "scala-library-2.13.6.jar" => Some("!META-INF/**")
-    case _                   => None
-  }
+   if (file.name == s"scala-library-${scalaVersion.value}.jar") 
+     Some("!META-INF/**")
+   else 
+     None
 }
