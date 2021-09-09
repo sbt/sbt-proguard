@@ -1,13 +1,13 @@
+import java.nio.file.FileSystems
+
 enablePlugins(SbtProguard)
 
-scalaVersion := "2.12.3"
+scalaVersion := "2.13.6"
+name := "simple"
 
-proguardOptions in Proguard += "-dontoptimize"
+Proguard / proguardOptions ++= Seq("-dontoptimize", "-dontnote", "-dontwarn", "-ignorewarnings")
+Proguard / proguardOptions += ProguardOptions.keepMain("Test")
 
-proguardOptions in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
+Proguard / proguardInputs := (Compile / dependencyClasspath).value.files
 
-proguardOptions in Proguard += ProguardOptions.keepMain("Test")
-
-proguardInputs in Proguard := (dependencyClasspath in Compile).value.files
-
-proguardFilteredInputs in Proguard ++= ProguardOptions.noFilter((packageBin in Compile).value)
+Proguard / proguardFilteredInputs ++= ProguardOptions.noFilter((Compile / packageBin).value)

@@ -1,16 +1,16 @@
+import java.nio.file.FileSystems
+
 enablePlugins(SbtProguard)
 
-scalaVersion := "2.12.3"
+scalaVersion := "2.13.6"
+name := "filter"
 
-proguardOptions in Proguard += "-dontoptimize"
-
-proguardOptions in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
-
-proguardOptions in Proguard += ProguardOptions.keepMain("Test")
-
-proguardInputFilter in Proguard := { file =>
-  file.name match {
-    case "scala-library.jar" => Some("!META-INF/**")
-    case _                   => None
-  }
+(Proguard / proguardMerge) := true
+(Proguard / proguardOptions) ++= Seq("-dontoptimize", "-dontnote", "-dontwarn", "-ignorewarnings")
+(Proguard / proguardOptions) += ProguardOptions.keepMain("Test")
+(Proguard / proguardInputFilter) := { file =>
+   if (file.name == s"scala-library-${scalaVersion.value}.jar") 
+     Some("!META-INF/**")
+   else 
+     None
 }

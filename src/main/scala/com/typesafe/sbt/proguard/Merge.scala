@@ -3,10 +3,10 @@ package com.lightbend.sbt.proguard
 import java.io.File
 import java.util.regex.Pattern
 
-import com.lightbend.sbt.proguard.Sbt10Compat._
 import sbt._
 import scala.util.matching.Regex
-import Sbt10Compat.SbtIoPath._
+import sbt.io.Path._
+import sbt.internal.inc.classpath.ClasspathUtil
 
 object Merge {
 
@@ -38,7 +38,7 @@ object Merge {
 
   def entries(sources: Seq[File], tmp: File): Seq[Entry] = {
     sources flatMap { source =>
-      val base = if (ClasspathUtilities.isArchive(source)) {
+      val base = if (ClasspathUtil.isArchive(source.toPath)) {
         val path =
           if (source.getCanonicalPath.indexOf(":") > 0)
             source.getCanonicalPath.substring(source.getCanonicalPath.indexOf("\\") + 1,

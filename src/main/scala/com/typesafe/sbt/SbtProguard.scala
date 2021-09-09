@@ -1,10 +1,12 @@
 package com.lightbend.sbt
 
 import com.lightbend.sbt.proguard.Merge
-import com.lightbend.sbt.proguard.Sbt10Compat._
 import sbt.Keys._
-import sbt.{Def, _}
+import sbt._
+import sbt.internal.inc.Analysis
+import xsbti.PathBasedFile
 
+import java.nio.file.FileSystems
 import scala.sys.process.Process
 
 object SbtProguard extends AutoPlugin {
@@ -18,6 +20,8 @@ object SbtProguard extends AutoPlugin {
 
   override def requires: Plugins = plugins.JvmPlugin
 
+  override def trigger = allRequirements
+
   override def projectConfigurations: Seq[Configuration] = Seq(Proguard)
 
   override lazy val projectSettings: Seq[Setting[_]] = inConfig(Proguard)(baseSettings) ++ dependencies
@@ -26,19 +30,22 @@ object SbtProguard extends AutoPlugin {
     proguardVersion := "7.0.0",
     proguardDirectory := crossTarget.value / "proguard",
     proguardConfiguration := proguardDirectory.value / "configuration.pro",
-    artifactPath := proguardDirectory.value / (artifactPath in packageBin in Compile).value.getName,
+    artifactPath := proguardDirectory.value / ( Compile / packageBin / artifactPath).value.getName,
     managedClasspath := Classpaths.managedJars(configuration.value, classpathTypes.value, update.value),
-    proguardBinaryDeps := getAllBinaryDeps.value,
-    proguardInputs := (fullClasspath in Runtime).value.files,
-    proguardLibraries := proguardBinaryDeps.value filterNot proguardInputs.value.toSet,
+    proguardInputs := (Runtime/fullClasspath).value.files,
+    (proguard / javaHome) := Some(FileSystems.getDefault.getPath(System.getProperty("java.home")).toFile), 
+    proguardLibraries := {
+      val dependencyJars = (Compile / dependencyClasspathAsJars).value.map(_.data)
+      dependencyJars.filterNot(proguardInputs.value.toSet) ++ (proguard / javaHome).value
+    },
     proguardOutputs := Seq(artifactPath.value),
     proguardDefaultInputFilter := Some("!META-INF/MANIFEST.MF"),
     proguardInputFilter := {
       val defaultInputFilterValue = proguardDefaultInputFilter.value
       _ => defaultInputFilterValue
     },
-    proguardLibraryFilter := { f => None },
-    proguardOutputFilter := { f => None },
+    proguardLibraryFilter := { _ => None },
+    proguardOutputFilter := { _ => None },
     proguardFilteredInputs := filtered(proguardInputs.value, proguardInputFilter.value),
     proguardFilteredLibraries := filtered(proguardLibraries.value, proguardLibraryFilter.value),
     proguardFilteredOutputs := filtered(proguardOutputs.value, proguardOutputFilter.value),
@@ -51,7 +58,7 @@ object SbtProguard extends AutoPlugin {
         jarOptions("-libraryjars", proguardFilteredLibraries.value) ++
         jarOptions("-outjars", proguardFilteredOutputs.value)
     },
-    javaOptions in proguard := Seq("-Xmx256M"),
+    proguard / javaOptions := Seq("-Xmx256M"),
     autoImport.proguard := proguardTask.value
   )
 
@@ -65,7 +72,7 @@ object SbtProguard extends AutoPlugin {
 
   def dependencies: Seq[Setting[_]] = Seq(
     resolvers += Resolver.bintrayRepo("guardsquare", "proguard"),
-    libraryDependencies += groupId((proguardVersion in Proguard).value) % "proguard-base" % (proguardVersion in Proguard).value % Proguard
+    libraryDependencies += groupId((Proguard / proguardVersion).value) % "proguard-base" % (Proguard / proguardVersion).value % Proguard
   )
 
   lazy val mergeTask: Def.Initialize[Task[Seq[ProguardOptions.Filtered]]] = Def.task {
@@ -73,10 +80,12 @@ object SbtProguard extends AutoPlugin {
     val mergeDirectoryValue = proguardMergeDirectory.value
     val mergeStrategiesValue = proguardMergeStrategies.value
     val filteredInputsValue = proguardFilteredInputs.value
-    if (proguardMerge.value) {
+    if (!proguardMerge.value) filteredInputsValue
+    else {
       val cachedMerge = FileFunction.cached(streamsValue.cacheDirectory / "proguard-merge", FilesInfo.hash) { _ =>
         streamsValue.log.info("Merging inputs before proguard...")
         IO.delete(mergeDirectoryValue)
+        IO.createDirectory(mergeDirectoryValue)
         val inputs = filteredInputsValue map (_.file)
         Merge.merge(inputs, mergeDirectoryValue, mergeStrategiesValue.reverse, streamsValue.log)
         mergeDirectoryValue.allPaths.get.toSet
@@ -86,13 +95,13 @@ object SbtProguard extends AutoPlugin {
       val filters = (filteredInputsValue flatMap (_.filter)).toSet
       val combinedFilter = if (filters.nonEmpty) Some(filters.mkString(",")) else None
       Seq(Filtered(mergeDirectoryValue, combinedFilter))
-    } else filteredInputsValue
+    }
   }
 
   lazy val proguardTask: Def.Initialize[Task[Seq[File]]] = Def.task {
     writeConfiguration(proguardConfiguration.value, proguardOptions.value)
     val proguardConfigurationValue = proguardConfiguration.value
-    val javaOptionsInProguardValue = (javaOptions in proguard).value
+    val javaOptionsInProguardValue = (proguard / javaOptions).value
     val managedClasspathValue = managedClasspath.value
     val streamsValue = streams.value
     val outputsValue = proguardOutputs.value
@@ -117,8 +126,8 @@ object SbtProguard extends AutoPlugin {
   def runProguard(config: File, javaOptions: Seq[String], classpath: Seq[File], log: Logger): Unit = {
     require(classpath.nonEmpty, "Proguard classpath cannot be empty!")
     val options = javaOptions ++ Seq("-cp", Path.makeString(classpath), "proguard.ProGuard", "-include", config.getAbsolutePath)
-    log.debug("Proguard command:")
-    log.debug("java " + options.mkString(" "))
+    log.info("Proguard command:")
+    log.info("java " + options.mkString(" "))
     val exitCode = Process("java", options) ! log
     if (exitCode != 0) sys.error("Proguard failed with exit code [%s]" format exitCode)
   }

@@ -1,13 +1,11 @@
+import java.nio.file.FileSystems
+
 enablePlugins(SbtProguard)
 
-scalaVersion := "2.12.3"
+scalaVersion := "2.13.6"
+name := "merge"
 
-proguardOptions in Proguard += "-dontoptimize"
-
-proguardOptions in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
-
-proguardOptions in Proguard += ProguardOptions.keepMain("Test")
-
-proguardMerge in Proguard := true
-
-proguardMergeStrategies in Proguard += ProguardMerge.discard("META-INF/.*".r)
+(Proguard / proguardMerge) := true
+(Proguard / proguardOptions) ++= Seq("-dontoptimize", "-dontnote", "-dontwarn", "-ignorewarnings")
+(Proguard / proguardOptions) += ProguardOptions.keepMain("Test")
+(Proguard / proguardMergeStrategies) += ProguardMerge.discard("META-INF/.*".r)
