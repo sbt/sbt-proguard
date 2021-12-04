@@ -12,12 +12,12 @@ Add plugin
 Add plugin to `project/plugins.sbt`. For example:
 
 ```scala
-addSbtPlugin("com.lightbend.sbt" % "sbt-proguard" % "{version}")
+addSbtPlugin("com.github.sbt" % "sbt-proguard" % "{version}")
 ```
 
 See [released versions][releases].
 
-Note: earlier versions of sbt-proguard used the `"com.typesafe.sbt"` organization.
+**Note**: earlier versions of sbt-proguard used the `"com.typesafe.sbt"` or `"com.lightbend.sbt"` organization.
 
 Example
 -------
@@ -35,7 +35,7 @@ proguardOptions in Proguard += ProguardOptions.keepMain("some.MainClass")
 Run proguard at the sbt shell with:
 
 ```shell
-proguard:proguard
+proguard
 ```
 
 Specifying the proguard version
