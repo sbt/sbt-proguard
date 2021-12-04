@@ -1,12 +1,13 @@
 package com.lightbend.sbt.proguard
 
 import java.io.File
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.regex.Pattern
 
 import sbt._
 import scala.util.matching.Regex
 import sbt.io.Path._
-import sbt.internal.inc.classpath.ClasspathUtil
 
 object Merge {
 
@@ -38,7 +39,7 @@ object Merge {
 
   def entries(sources: Seq[File], tmp: File): Seq[Entry] = {
     sources flatMap { source =>
-      val base = if (ClasspathUtil.isArchive(source.toPath)) {
+      val base = if (isArchive(source.toPath)) {
         val path =
           if (source.getCanonicalPath.indexOf(":") > 0)
             source.getCanonicalPath.substring(source.getCanonicalPath.indexOf("\\") + 1,
@@ -52,6 +53,12 @@ object Merge {
       (base.allPaths --- base).get pair relativeTo(base) map { p => Entry(p._2, p._1, source) }
     }
   }
+
+  // copy-pasted from Zinc instead of using internal code
+  private def isArchive(file: Path): Boolean =
+    Files.isRegularFile(file) && isArchiveName(file.getFileName.toString)
+
+  private def isArchiveName(fileName: String) = fileName.endsWith(".jar") || fileName.endsWith(".zip")
 
   trait Strategy {
     def claims(path: EntryPath): Boolean

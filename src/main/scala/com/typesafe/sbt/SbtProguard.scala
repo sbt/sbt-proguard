@@ -3,9 +3,6 @@ package com.lightbend.sbt
 import com.lightbend.sbt.proguard.Merge
 import sbt.Keys._
 import sbt._
-import sbt.internal.inc.Analysis
-import xsbti.PathBasedFile
-
 import java.nio.file.FileSystems
 import scala.sys.process.Process
 
