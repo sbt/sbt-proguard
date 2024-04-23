@@ -42,12 +42,12 @@ Specifying the proguard version
 -------
 In your `build.sbt`:
 ```scala
-Proguard/proguardVersion := "6.2.2"
+Proguard/proguardVersion := "7.4.2"
 ```
 
 Or interactively in the sbt shell:
 ```shell
-set myProject/Proguard/proguardVersion := "6.2.2"
+set myProject/Proguard/proguardVersion := "7.4.2"
 show myProject/Proguard/proguardVersion
 ```
 
@@ -82,6 +82,15 @@ There are corresponding settings for libraries and outputs: `proguardLibraryFilt
 
 For more advanced usage the `proguardFilteredInputs`, `proguardFilteredLibraries`, and
 `proguardFilteredOutputs` settings can be set directly.
+
+
+Tasty files
+-------
+
+By default, all `.tasty` files will be removed from the proguard output jars. This is because [Tasty](https://docs.scala-lang.org/scala3/guides/tasty-overview.html) files contain even more information than the java class files which you just obfuscated, so we're assuming you don't want to ship them. To disable the removal of tasty files:
+```scala
+Proguard/proguardRemoveTastyFiles := false
+```
 
 
 Merging

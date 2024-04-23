@@ -24,6 +24,7 @@ trait ProguardKeys {
   val proguardMergeStrategies = taskKey[Seq[Strategy]]("proguard merge strategies")
   val proguardMergedInputs = taskKey[Seq[Filtered]]("proguard merged inputs")
   val proguardOptions = taskKey[Seq[String]]("proguard options")
+  val proguardRemoveTastyFiles = taskKey[Boolean]("configure if `proguard` should remove .tasty files from the output jars (defaults to `true`)")
   val proguard = taskKey[Seq[File]]("proguard")
 
   object ProguardOptions {

@@ -1,5 +1,5 @@
 ThisBuild / version := {
-  if ((ThisBuild / isSnapshot).value) "0.5.0" + "-SNAPSHOT"
+  if ((ThisBuild / isSnapshot).value) "0.5.1" + "-SNAPSHOT"
   else (ThisBuild / version).value
 }
 ThisBuild / scalaVersion := "2.12.15"

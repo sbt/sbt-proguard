@@ -3,7 +3,7 @@ package com.lightbend.sbt
 import com.lightbend.sbt.proguard.Merge
 import sbt.Keys._
 import sbt._
-import java.nio.file.FileSystems
+import java.nio.file.{Files, FileSystems}
 import scala.sys.process.Process
 
 object SbtProguard extends AutoPlugin {
@@ -55,8 +55,9 @@ object SbtProguard extends AutoPlugin {
         jarOptions("-libraryjars", proguardFilteredLibraries.value) ++
         jarOptions("-outjars", proguardFilteredOutputs.value)
     },
+    proguardRemoveTastyFiles := true,
     proguard / javaOptions := Seq("-Xmx256M"),
-    autoImport.proguard := proguardTask.value
+    autoImport.proguard := proguardTask.value,
   )
 
   private def groupId(proguardVersionStr: String): String =
@@ -102,11 +103,15 @@ object SbtProguard extends AutoPlugin {
     val managedClasspathValue = managedClasspath.value
     val streamsValue = streams.value
     val outputsValue = proguardOutputs.value
+    val shouldRemoveTastyFiles = proguardRemoveTastyFiles.value
+    val logger = streams.value.log
     val cachedProguard = FileFunction.cached(streams.value.cacheDirectory / "proguard", FilesInfo.hash) { _ =>
       outputsValue foreach IO.delete
       streamsValue.log.debug("Proguard configuration:")
       proguardOptions.value foreach (streamsValue.log.debug(_))
       runProguard(proguardConfigurationValue, javaOptionsInProguardValue, managedClasspathValue.files, streamsValue.log)
+      if (shouldRemoveTastyFiles)
+        outputsValue.foreach(removeTastyFiles(_, logger))
       outputsValue.toSet
     }
     val inputs = (proguardConfiguration.value +: inputFiles(proguardFilteredInputs.value)).toSet
@@ -128,4 +133,16 @@ object SbtProguard extends AutoPlugin {
     val exitCode = Process("java", options) ! log
     if (exitCode != 0) sys.error("Proguard failed with exit code [%s]" format exitCode)
   }
+
+  private def removeTastyFiles(jar: File, logger: sbt.internal.util.ManagedLogger): Unit = {
+    logger.info(s"removing .tasty files from $jar")
+    val zipFs = FileSystems.newFileSystem(jar.toPath, null)
+    zipFs.getRootDirectories.forEach { dir =>
+      Files.walk(dir)
+        .filter(_.toString.endsWith(".tasty"))
+        .forEach(Files.delete)
+    }
+    zipFs.close()
+  }
 }
+
