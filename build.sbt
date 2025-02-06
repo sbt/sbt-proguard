@@ -2,12 +2,12 @@ ThisBuild / version := {
   if ((ThisBuild / isSnapshot).value) "0.5.0" + "-SNAPSHOT"
   else (ThisBuild / version).value
 }
-ThisBuild / scalaVersion := "2.12.20"
+ThisBuild / scalaVersion := "2.12.15"
 
 lazy val root = (project in file("."))
   .enablePlugins(SbtPlugin)
-  .settings(
-    name := "sbt-proguard",
+  .settings(nocomma {
+    name := "sbt-proguard"
 
     scalacOptions ++= Seq(
       "-unchecked",
@@ -15,18 +15,18 @@ lazy val root = (project in file("."))
       "-feature",
       "-Xlint",
       "-Xfatal-warnings",
-    ),
+    )
 
-    scriptedDependencies := publishLocal.value,
-    scriptedLaunchOpts ++= Seq("-Xms512m", "-Xmx512m", s"-Dproject.version=${version.value}"),
-    // scriptedBufferLog := false,
+    scriptedDependencies := publishLocal.value
+    scriptedLaunchOpts ++= Seq("-Xms512m", "-Xmx512m", s"-Dproject.version=${version.value}")
+    // scriptedBufferLog := false
 
     pluginCrossBuild / sbtVersion := {
       scalaBinaryVersion.value match {
         case "2.12" => "1.1.6" // minimum sbt version
       }
-    },
-  )
+    }
+  })
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
 ThisBuild / organization := "com.github.sbt"
