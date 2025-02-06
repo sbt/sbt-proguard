@@ -7,6 +7,7 @@ name := "scala3"
 
 Proguard / proguardOptions ++= Seq("-dontoptimize", "-dontnote", "-dontwarn", "-ignorewarnings")
 Proguard / proguardOptions += ProguardOptions.keepMain("Test")
+Proguard / proguardOptions += ProguardOptions.mappingsFile("mappings.txt")
 
 Proguard / proguardInputs := (Compile / dependencyClasspath).value.files
 

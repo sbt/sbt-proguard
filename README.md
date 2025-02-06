@@ -146,6 +146,10 @@ proguardMergeStrategies in Proguard ++= Seq(
 Completely custom merge strategies can also be created. See the plugin source
 code for how this could be done.
 
+Scala 3
+---------------
+Proguard doesn't handle Scala3's tasty files which contain much more information than java's class files. Therefor we need to post-process that proguard output jar and remove all tasty files for classes that have been obfuscated. To find out which classes have been obfuscated, you must configure the `-mappingsfile` option, e.g. via `Proguard / proguardOptions += ProguardOptions.mappingsFile("mappings.txt")`. See the [Scala3 test project](src/sbt-test/proguard/scala3) which is included in the `sbt scripted` tests. 
+
 
 Sample projects
 ---------------

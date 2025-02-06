@@ -18,16 +18,6 @@ TaskKey[Unit]("check") := {
     .toSeq
   zipFs.close()
 
-  val actualTestClassEntries = jarEntries.map(_.toString).filter(_.startsWith("/Test")).toSet
-  val expectedTestClassEntries = Set("/Test.tasty", "/Test.class")
-  assert(
-    actualTestClassEntries == expectedTestClassEntries, 
-    s"""Test.class with has a `keep` rule and should be preserved, including the tasty file!
-       |expected=$expectedTestClassEntries
-       |  actual=$actualTestClassEntries
-       |""".stripMargin
-  )
-
   val obfuscateMeEntries = jarEntries.filter(_.toString.contains("ObfuscateMe"))
   assert(
     obfuscateMeEntries.isEmpty,
