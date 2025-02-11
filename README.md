@@ -26,10 +26,9 @@ A simple `build.sbt` with settings to configure sbt-proguard:
 
 ```scala
 enablePlugins(SbtProguard)
-
-proguardOptions in Proguard ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
-
-proguardOptions in Proguard += ProguardOptions.keepMain("some.MainClass")
+Proguard/proguardOptions ++= Seq("-dontnote", "-dontwarn", "-ignorewarnings")
+Proguard/proguardOptions += ProguardOptions.keepMain("some.MainClass")
+Proguard/proguardOptions += ProguardOptions.mappingsFile("mappings.txt")`
 ```
 
 Run proguard at the sbt shell with:
@@ -42,13 +41,7 @@ Specifying the proguard version
 -------
 In your `build.sbt`:
 ```scala
-Proguard/proguardVersion := "6.2.2"
-```
-
-Or interactively in the sbt shell:
-```shell
-set myProject/Proguard/proguardVersion := "6.2.2"
-show myProject/Proguard/proguardVersion
+Proguard/proguardVersion := "7.6.1"
 ```
 
 Available proguard versions: https://github.com/Guardsquare/proguard/releases
@@ -63,7 +56,7 @@ files.
 For example, to add a `!META-INF/**` filter to just the scala-library jar:
 
 ```scala
-proguardInputFilter in Proguard := { file =>
+Proguard/proguardInputFilter := { file =>
   file.name match {
     case "scala-library.jar" => Some("!META-INF/**")
     case _                   => None
@@ -96,7 +89,7 @@ The sbt-proguard plugin supports pre-merging inputs, similar to creating an
 assembly jar first. To enable this merging use:
 
 ```scala
-proguardMerge in Proguard := true
+Proguard/proguardMerge := true
 ```
 
 Conflicting paths that are not identical will now fail at the merge stage. These
@@ -119,25 +112,25 @@ The default strategy is to only discard `META-INF/MANIFEST.MF`. This same
 strategy could be added with:
 
 ```scala
-proguardMergeStrategies in Proguard += ProguardMerge.discard("META-INF/MANIFEST.MF")
+Proguard/proguardMergeStrategies += ProguardMerge.discard("META-INF/MANIFEST.MF")
 ```
 
 Or all `META-INF` contents could be discarded with a regular expression:
 
 ```scala
-proguardMergeStrategies in Proguard += ProguardMerge.discard("META-INF/.*".r)
+Proguard/proguardMergeStrategies += ProguardMerge.discard("META-INF/.*".r)
 ```
 
 To concatenate all `reference.conf` files together use:
 
 ```scala
-proguardMergeStrategies in Proguard += ProguardMerge.append("reference.conf")
+Proguard/proguardMergeStrategies += ProguardMerge.append("reference.conf")
 ```
 
 To discard all `.html` and `.txt` files you may use two strategies together:
 
 ```scala
-proguardMergeStrategies in Proguard ++= Seq(
+Proguard/proguardMergeStrategies ++= Seq(
   ProguardMerge.discard("\\.html$".r),
   ProguardMerge.discard("\\.txt$".r) 
 )
@@ -148,7 +141,7 @@ code for how this could be done.
 
 Scala 3
 ---------------
-ProGuard doesn't handle Scala 3's TASTy files, which contain much more information than Java's class files. Therefore, we need to post-process the ProGuard output JAR and remove all TASTy files for classes that have been obfuscated. To determine which classes have been obfuscated, you must configure the `-mappingsfile` option, e.g., via `Proguard / proguardOptions += ProguardOptions.mappingsFile("mappings.txt")`. See the [Scala 3 test project](src/sbt-test/proguard/scala3), which is included in the scripted tests.
+ProGuard doesn't handle Scala 3's TASTy files, which contain much more information than Java's class files. Therefore, we need to post-process the ProGuard output JAR and remove all TASTy files for classes that have been obfuscated. To determine which classes have been obfuscated, you must configure the `-mappingsfile` option, e.g., via `Proguard/proguardOptions += ProguardOptions.mappingsFile("mappings.txt")`. See the [Scala 3 test project](src/sbt-test/proguard/scala3), which is included in the scripted tests.
 
 
 Sample projects
