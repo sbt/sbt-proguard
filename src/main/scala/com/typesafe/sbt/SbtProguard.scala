@@ -70,7 +70,6 @@ object SbtProguard extends AutoPlugin {
     }
 
   def dependencies: Seq[Setting[_]] = Seq(
-    resolvers += Resolver.bintrayRepo("guardsquare", "proguard"),
     libraryDependencies += groupId((Proguard / proguardVersion).value) % "proguard-base" % (Proguard / proguardVersion).value % Proguard
   )
 
