@@ -2,7 +2,7 @@ ThisBuild / version := {
   if ((ThisBuild / isSnapshot).value) "0.5.0" + "-SNAPSHOT"
   else (ThisBuild / version).value
 }
-ThisBuild / scalaVersion := "2.12.15"
+ThisBuild / scalaVersion := "2.12.20"
 
 lazy val root = (project in file("."))
   .enablePlugins(SbtPlugin)
@@ -21,9 +21,10 @@ lazy val root = (project in file("."))
     scriptedLaunchOpts ++= Seq("-Xms512m", "-Xmx512m", s"-Dproject.version=${version.value}")
     // scriptedBufferLog := false
 
-    pluginCrossBuild / sbtVersion := {
+    (pluginCrossBuild / sbtVersion) := {
       scalaBinaryVersion.value match {
-        case "2.12" => "1.1.6" // minimum sbt version
+        case "2.12" => "1.2.8"
+        case _      => "2.0.0-M3"
       }
     }
   })
