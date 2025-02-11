@@ -1,5 +1,5 @@
 import java.nio.file.{Files, FileSystems}
-import scala.jdk.CollectionConverters.*
+import collection.JavaConverters._
 import scala.sys.process.Process
 
 // for sbt scripted test:

@@ -2,29 +2,22 @@ name: CI
 on:
   pull_request:
   push:
-  schedule:
-  # 2am EST every Saturday
-  - cron: '0 7 * * 6'
 jobs:
   build_scala2_12:
     runs-on: ubuntu-latest
     env:
+      # define Java options for both official sbt and sbt-extras
       JAVA_OPTS: -Xms2048M -Xmx2048M -Xss6M -XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF-8
+      JVM_OPTS:  -Xms2048M -Xmx2048M -Xss6M -XX:ReservedCodeCacheSize=256M -Dfile.encoding=UTF-8
     steps:
     - name: Checkout
-      uses: actions/checkout@v2
-    - name: Setup Scala
-      uses: olafurpg/setup-scala@v13
+      uses: actions/checkout@v4
+    - name: Setup JDK
+      uses: actions/setup-java@v4
       with:
-        java-version: "adopt@1.8"
-    - name: Coursier cache
-      uses: coursier/cache-action@v6
+        distribution: "zulu"
+        java-version: 8
+        cache: sbt
+    - uses: sbt/setup-sbt@v1
     - name: Build and test
-      run: |
-        sbt -v clean +test +scripted
-        rm -rf "$HOME/.ivy2/local" || true
-        find $HOME/Library/Caches/Coursier/v1        -name "ivydata-*.properties" -delete || true
-        find $HOME/.ivy2/cache                       -name "ivydata-*.properties" -delete || true
-        find $HOME/.cache/coursier/v1                -name "ivydata-*.properties" -delete || true
-        find $HOME/.sbt                              -name "ivydata-*.properties" -delete || true
-      shell: bash
+      run: sbt -v clean +test +scripted
