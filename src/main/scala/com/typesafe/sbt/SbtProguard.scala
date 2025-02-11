@@ -112,13 +112,13 @@ object SbtProguard extends AutoPlugin {
       runProguard(proguardConfigurationValue, javaOptionsInProguardValue, managedClasspathValue.files, streamsValue.log)
 
       if (scalaBinaryVersion.value == "3") {
-        streamsValue.log.info("This is a Scala 3 build - will now remove the tasty files from the proguard outputs")
+        streamsValue.log.info("This is a Scala 3 build - will now remove the TASTy files from the ProGuard outputs")
         val mappingsFile = findMappingsFileConfig(
           options = (Proguard/proguardOptions).value,
           baseDir = (Proguard/proguardDirectory).value
         ).getOrElse(throw new AssertionError(
           """mappings file not found in proguardOptions. Please configure it using e.g. `-printmapping mapings.txt`
-            | - it must be configured for a Scala 3 build so we can remove the tasty files for obfuscated classes""".stripMargin
+            | - it must be configured for a Scala 3 build so we can remove the TASTy files for obfuscated classes""".stripMargin
         ))
         removeTastyFilesForObfuscatedClasses(
           mappingsFile,
@@ -153,8 +153,8 @@ object SbtProguard extends AutoPlugin {
     val obfuscatedClasses = findObfuscatedClasses(mappingsFile)
 
     if (obfuscatedClasses.nonEmpty) {
-      logger.info(s"found ${obfuscatedClasses.size} classes that have been obfuscated; will now remove their tasty files (bar some that are still required), since those contain even more information than the class files")
-      // note: we must not delete the tasty files for unobfuscated classes since that would break the REPL
+      logger.info(s"found ${obfuscatedClasses.size} classes that have been obfuscated; will now remove their TASTy files (bar some that are still required), since those contain even more information than the class files")
+      // note: we must not delete the TASTy files for unobfuscated classes since that would break the REPL
       val tastyEntriesForObfuscatedClasses = obfuscatedClasses.map { className =>
         val zipEntry = "/" + className.replaceAll("\\.", "/") // `/` instead of `.`
         val tastyFileConvention = zipEntry.replaceFirst("\\$.*", "")
@@ -162,7 +162,7 @@ object SbtProguard extends AutoPlugin {
       }
 
       val deletedEntries = deleteFromJar(proguardOutputJar, tastyEntriesForObfuscatedClasses)
-      logger.info(s"deleted ${deletedEntries.size} tasty files from $proguardOutputJar")
+      logger.info(s"deleted ${deletedEntries.size} TASTy files from $proguardOutputJar")
       deletedEntries.foreach(println)
     }
   }
