@@ -27,6 +27,12 @@ lazy val root = (project in file("."))
         case _      => "2.0.0-M3"
       }
     }
+    scriptedSbt := {
+      scalaBinaryVersion.value match {
+        case "2.12" => "1.10.7"
+        case _      => "2.0.0-M3"
+      }
+    }
   })
 
 Global / onChangedBuildSource := ReloadOnSourceChanges
