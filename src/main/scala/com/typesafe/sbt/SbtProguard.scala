@@ -1,9 +1,11 @@
 package com.lightbend.sbt
 
 import com.lightbend.sbt.proguard.Merge
-import sbt.Keys._
+import java.nio.file.{Files, FileSystems}
 import sbt._
-import java.nio.file.FileSystems
+import sbt.Keys._
+import sbt.internal.util.ManagedLogger
+import scala.collection.JavaConverters._
 import scala.sys.process.Process
 
 object SbtProguard extends AutoPlugin {
@@ -102,11 +104,29 @@ object SbtProguard extends AutoPlugin {
     val managedClasspathValue = managedClasspath.value
     val streamsValue = streams.value
     val outputsValue = proguardOutputs.value
+    val proguardOutputJar = (Proguard/proguardOutputs).value.head
     val cachedProguard = FileFunction.cached(streams.value.cacheDirectory / "proguard", FilesInfo.hash) { _ =>
       outputsValue foreach IO.delete
       streamsValue.log.debug("Proguard configuration:")
       proguardOptions.value foreach (streamsValue.log.debug(_))
       runProguard(proguardConfigurationValue, javaOptionsInProguardValue, managedClasspathValue.files, streamsValue.log)
+
+      if (scalaBinaryVersion.value == "3") {
+        streamsValue.log.info("This is a Scala 3 build - will now remove the TASTy files from the ProGuard outputs")
+        val mappingsFile = findMappingsFileConfig(
+          options = (Proguard/proguardOptions).value,
+          baseDir = (Proguard/proguardDirectory).value
+        ).getOrElse(throw new AssertionError(
+          """mappings file not found in proguardOptions. Please configure it using e.g. `-printmapping mapings.txt`
+            | - it must be configured for a Scala 3 build so we can remove the TASTy files for obfuscated classes""".stripMargin
+        ))
+        removeTastyFilesForObfuscatedClasses(
+          mappingsFile,
+          proguardOutputJar = proguardOutputJar,
+          logger = streamsValue.log
+        )
+      }
+
       outputsValue.toSet
     }
     val inputs = (proguardConfiguration.value +: inputFiles(proguardFilteredInputs.value)).toSet
@@ -127,5 +147,73 @@ object SbtProguard extends AutoPlugin {
     log.info("java " + options.mkString(" "))
     val exitCode = Process("java", options) ! log
     if (exitCode != 0) sys.error("Proguard failed with exit code [%s]" format exitCode)
+  }
+
+  def removeTastyFilesForObfuscatedClasses(mappingsFile: File, proguardOutputJar: File, logger: ManagedLogger): Unit = {
+    val obfuscatedClasses = findObfuscatedClasses(mappingsFile)
+
+    if (obfuscatedClasses.nonEmpty) {
+      logger.info(s"found ${obfuscatedClasses.size} classes that have been obfuscated; will now remove their TASTy files (bar some that are still required), since those contain even more information than the class files")
+      // note: we must not delete the TASTy files for unobfuscated classes since that would break the REPL
+      val tastyEntriesForObfuscatedClasses = obfuscatedClasses.map { className =>
+        val zipEntry = "/" + className.replaceAll("\\.", "/") // `/` instead of `.`
+        val tastyFileConvention = zipEntry.replaceFirst("\\$.*", "")
+        s"$tastyFileConvention.tasty"
+      }
+
+      val deletedEntries = deleteFromJar(proguardOutputJar, tastyEntriesForObfuscatedClasses)
+      logger.info(s"deleted ${deletedEntries.size} TASTy files from $proguardOutputJar")
+      deletedEntries.foreach(println)
+    }
+  }
+
+  def findMappingsFileConfig(options: Seq[String], baseDir: File): Option[File] = {
+    options.find(_.startsWith("-printmapping")).flatMap { keyValue =>
+      keyValue.split(" ") match {
+        case Array(key, value) => Some(value)
+        case _ =>
+          None
+      }
+    }.map { value =>
+      val mappingsFile = file(value)
+      if (mappingsFile.isAbsolute) mappingsFile
+      else baseDir / value
+    }
+  }
+
+  def findObfuscatedClasses(mappingsFile: File): Set[String] = {
+    // a typical mapping file entry looks like this:
+    // `io.joern.x2cpg.passes.linking.filecompat.FileNameCompat -> io.joern.x2cpg.passes.a.a.a:`
+    val mapping = "(.*) -> (.*):".r
+
+    val classesThatHaveBeenObfuscated = for {
+      line <- Files.lines(mappingsFile.toPath).iterator().asScala
+      // the lines ending with `:` list the classname mappings:
+      if line.endsWith(":")
+      // extract the original and obfuscated name via regex matching:
+      mapping(original, obfuscated) = line
+      // if both sides are identical, this class didn't get obfuscated:
+      if original != obfuscated
+    } yield original
+
+    classesThatHaveBeenObfuscated.toSet
+  }
+
+  /** Deletes all entries from a jar that is in the given set of entry paths.
+    * Returns the Paths of the deleted entries. */
+  def deleteFromJar(jar: File, toDelete: Set[String]): Seq[String] = {
+    val zipFs = FileSystems.newFileSystem(jar.toPath, null: ClassLoader)
+
+    val deletedEntries = for {
+      zipRootDir <- zipFs.getRootDirectories.asScala
+      entry <- Files.walk(zipRootDir).iterator.asScala
+      if (toDelete.contains(entry.toString))
+    } yield {
+      Files.delete(entry)
+      entry.toString
+    }
+
+    zipFs.close()
+    deletedEntries.toSeq
   }
 }

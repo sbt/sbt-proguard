@@ -63,6 +63,9 @@ trait ProguardKeys {
         |    public static $returnType $methodName ($inputType);
         |}""".stripMargin
     }
+
+    def mappingsFile(fileName: String): String =
+      s"-printmapping $fileName"
   }
 
   object ProguardMerge {

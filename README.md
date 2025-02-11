@@ -146,6 +146,10 @@ proguardMergeStrategies in Proguard ++= Seq(
 Completely custom merge strategies can also be created. See the plugin source
 code for how this could be done.
 
+Scala 3
+---------------
+ProGuard doesn't handle Scala 3's TASTy files, which contain much more information than Java's class files. Therefore, we need to post-process the ProGuard output JAR and remove all TASTy files for classes that have been obfuscated. To determine which classes have been obfuscated, you must configure the `-mappingsfile` option, e.g., via `Proguard / proguardOptions += ProguardOptions.mappingsFile("mappings.txt")`. See the [Scala 3 test project](src/sbt-test/proguard/scala3), which is included in the scripted tests.
+
 
 Sample projects
 ---------------
