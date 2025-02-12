@@ -162,7 +162,7 @@ object SbtProguard extends AutoPlugin {
 
       val deletedEntries = deleteFromJar(proguardOutputJar, tastyEntriesForObfuscatedClasses)
       logger.info(s"deleted ${deletedEntries.size} TASTy files from $proguardOutputJar")
-      deletedEntries.foreach(println)
+      deletedEntries.foreach(logger.debug(_))
     }
   }
 
